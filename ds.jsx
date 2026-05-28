@@ -1,4 +1,4 @@
-/* global React, ReactDOM, Button, Input, Kbd, Badge, Card, CardHeader, CardTitle, CardDescription,
+﻿/* global React, ReactDOM, Button, Input, Kbd, Badge, Card, CardHeader, CardTitle, CardDescription,
             CardContent, CardFooter, Separator, Avatar, AvatarRound, Tabs, TabsTrigger,
             Sparkline, cn, I */
 
@@ -68,30 +68,30 @@ function DS() {
           <div className="inline-flex items-center gap-2 mb-4 bg-accent text-accent-foreground px-2.5 py-1 rounded-full
                           text-[11px] font-medium uppercase tracking-wider">
             <span className="w-5 h-5 rounded-sm bg-primary text-primary-foreground grid place-items-center font-mono text-[8.5px] font-semibold tracking-tight">AC</span>
-            <span>Accounting Completed Design System · v1.0</span>
+            <span>Accounting Completed Design System Â· v1.0</span>
           </div>
           <h1 className="text-[40px] leading-[1.1] font-semibold tracking-tight m-0 mb-3" style={{ textWrap: "balance" }}>
             A calm, data-forward system for cloud accounting.
           </h1>
           <p className="text-[18px] leading-7 text-muted-foreground m-0" style={{ textWrap: "pretty" }}>
             Tokens, components, and patterns built for accountants and the business owners they
-            serve — quiet surfaces that get out of the way of ledgers, totals, and trend lines.
+            serve â€” quiet surfaces that get out of the way of ledgers, totals, and trend lines.
           </p>
         </div>
         <div className="flex flex-col gap-1 items-end text-[12px] text-text-soft">
           <span>Updated <span className="font-mono text-foreground">2026-05-28</span></span>
           <span>Stack <span className="font-mono text-foreground">Tailwind + shadcn-style</span></span>
           <span>Owner <span className="font-mono text-foreground">Design @ AC</span></span>
-          <a href="Profit %26 Loss.html" className="inline-flex items-center gap-2 text-primary font-medium hover:underline mt-2">Open P&amp;L example →</a>
-          <a href="Clients.html" className="inline-flex items-center gap-2 text-primary font-medium hover:underline">Open Clients example →</a>
+          <a href="Profit %26 Loss.html" className="inline-flex items-center gap-2 text-primary font-medium hover:underline mt-2">Open P&amp;L example â†’</a>
+          <a href="Clients.html" className="inline-flex items-center gap-2 text-primary font-medium hover:underline">Open Clients example â†’</a>
         </div>
       </header>
 
       {/* ============================================================
-          01 · Color
+          01 Â· Color
           ============================================================ */}
       <Section no="01 / Tokens" title="Color"
-               sub="Cool, near-neutral surfaces let financial data sit at the front. One deep teal-blue accent — evolved from the heritage blue palette — carries primary action and state.">
+               sub="Cool, near-neutral surfaces let financial data sit at the front. One deep teal-blue accent â€” evolved from the heritage blue palette â€” carries primary action and state.">
         <Block title="Surface & neutrals">
           <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>
             <Swatch name="Background"    token="--background"     hex="hsl(214 20% 97%)" bg="hsl(214 20% 97%)" />
@@ -124,35 +124,35 @@ function DS() {
       </Section>
 
       {/* ============================================================
-          02 · Typography
+          02 Â· Typography
           ============================================================ */}
       <Section no="02 / Tokens" title="Typography"
                sub="IBM Plex Sans for UI; IBM Plex Mono for every number on screen. Tabular figures and tight tracking keep ledger columns lock-step.">
         <div className="flex flex-col gap-4">
-          <TypeRow name="Display" token="text-[40px]" props="40 / 44 · 600 · −0.02em"
+          <TypeRow name="Display" token="text-[40px]" props="40 / 44 Â· 600 Â· âˆ’0.02em"
                    sample={<span style={{ fontSize: 40, lineHeight: "44px", fontWeight: 600, letterSpacing: "-0.02em" }}>A calm system.</span>} />
-          <TypeRow name="Title" token="text-[28px]" props="28 / 36 · 600 · −0.01em"
+          <TypeRow name="Title" token="text-[28px]" props="28 / 36 Â· 600 Â· âˆ’0.01em"
                    sample={<span style={{ fontSize: 28, lineHeight: "36px", fontWeight: 600, letterSpacing: "-0.01em" }}>Income statement trend analysis</span>} />
-          <TypeRow name="Heading" token="text-[22px]" props="22 / 30 · 600"
+          <TypeRow name="Heading" token="text-[22px]" props="22 / 30 Â· 600"
                    sample={<span style={{ fontSize: 22, lineHeight: "30px", fontWeight: 600 }}>Operating expenses</span>} />
-          <TypeRow name="Subheading" token="text-[18px]" props="18 / 26 · 400"
+          <TypeRow name="Subheading" token="text-[18px]" props="18 / 26 Â· 400"
                    sample={<span className="text-muted-foreground" style={{ fontSize: 18, lineHeight: "26px" }}>12-month trend, accrual basis</span>} />
-          <TypeRow name="Body / default" token="text-[13.5px]" props="13.5 / 20 · 400"
+          <TypeRow name="Body / default" token="text-[13.5px]" props="13.5 / 20 Â· 400"
                    sample={<span style={{ fontSize: 13.5, lineHeight: "20px" }}>Cells, controls, and form inputs default here. Comfortable to read across long ledgers.</span>} />
-          <TypeRow name="Small / caption" token="text-[12px]" props="12 / 18 · 400"
+          <TypeRow name="Small / caption" token="text-[12px]" props="12 / 18 Â· 400"
                    sample={<span className="text-muted-foreground" style={{ fontSize: 12, lineHeight: "18px" }}>Secondary metadata, helper text, table footers.</span>} />
-          <TypeRow name="Label / eyebrow" token="text-[11px] · upper" props="11 / 16 · 500 · +0.05em"
-                   sample={<span className="text-text-soft uppercase font-medium" style={{ fontSize: 11, letterSpacing: "0.05em" }}>Total income · YTD · % of revenue</span>} />
-          <TypeRow name="Mono numeric" token="font-mono" props="IBM Plex Mono · tnum · zero"
-                   sample={<span className="font-mono tnum" style={{ fontSize: 18, letterSpacing: "0.01em" }}>$1,247,830.42  ·  +14.2%  ·  (3,420)</span>} />
+          <TypeRow name="Label / eyebrow" token="text-[11px] Â· upper" props="11 / 16 Â· 500 Â· +0.05em"
+                   sample={<span className="text-text-soft uppercase font-medium" style={{ fontSize: 11, letterSpacing: "0.05em" }}>Total income Â· YTD Â· % of revenue</span>} />
+          <TypeRow name="Mono numeric" token="font-mono" props="IBM Plex Mono Â· tnum Â· zero"
+                   sample={<span className="font-mono tnum" style={{ fontSize: 18, letterSpacing: "0.01em" }}>$1,247,830.42  Â·  +14.2%  Â·  (3,420)</span>} />
         </div>
       </Section>
 
       {/* ============================================================
-          03 · Space, radius, elevation
+          03 Â· Space, radius, elevation
           ============================================================ */}
       <Section no="03 / Tokens" title="Space, radius, elevation"
-               sub="A 4-step spacing scale carries every padding and gap. Radii stay small enough to feel professional; elevation is restrained — borders do most of the work.">
+               sub="A 4-step spacing scale carries every padding and gap. Radii stay small enough to feel professional; elevation is restrained â€” borders do most of the work.">
         <Block title="Spacing scale">
           <div className="flex flex-col gap-3">
             {[
@@ -189,19 +189,19 @@ function DS() {
         <Block title="Elevation">
           <div className="grid grid-cols-4 gap-4">
             <div className="bg-card border border-border rounded-lg p-5 shadow-elev-xs">
-              <div className="font-medium">XS — hairline lift</div>
+              <div className="font-medium">XS â€” hairline lift</div>
               <div className="font-mono text-[10.5px] text-text-soft">shadow-elev-xs</div>
             </div>
             <div className="bg-card border border-border rounded-lg p-5 shadow-elev-sm">
-              <div className="font-medium">SM — cards</div>
+              <div className="font-medium">SM â€” cards</div>
               <div className="font-mono text-[10.5px] text-text-soft">shadow-elev-sm</div>
             </div>
             <div className="bg-card border border-border rounded-lg p-5 shadow-elev-md">
-              <div className="font-medium">MD — popovers</div>
+              <div className="font-medium">MD â€” popovers</div>
               <div className="font-mono text-[10.5px] text-text-soft">shadow-elev-md</div>
             </div>
             <div className="bg-card border border-border rounded-lg p-5 shadow-elev-lg">
-              <div className="font-medium">LG — dialogs</div>
+              <div className="font-medium">LG â€” dialogs</div>
               <div className="font-mono text-[10.5px] text-text-soft">shadow-elev-lg</div>
             </div>
           </div>
@@ -209,10 +209,10 @@ function DS() {
       </Section>
 
       {/* ============================================================
-          04 · Components
+          04 Â· Components
           ============================================================ */}
       <Section no="04 / Components" title="Components"
-               sub="Buttons, inputs, badges, tables — built on the same primitives shadcn/ui ships. Every utility points at the theme tokens above.">
+               sub="Buttons, inputs, badges, tables â€” built on the same primitives shadcn/ui ships. Every utility points at the theme tokens above.">
         <Block title="Buttons">
           <div className="bg-card border border-border rounded-lg p-5 flex flex-wrap gap-3 items-center">
             <Button variant="primary">{I.plus}<span>Add transaction</span></Button>
@@ -224,7 +224,7 @@ function DS() {
             <Button variant="destructive">Delete client</Button>
             <Button variant="ghost" size="icon">{I.more}</Button>
             <Button size="sm">{I.filter}<span>Filter</span></Button>
-            <Button variant="link">Learn more →</Button>
+            <Button variant="link">Learn more â†’</Button>
           </div>
         </Block>
 
@@ -234,8 +234,8 @@ function DS() {
             <div className="w-[160px]"><Input defaultValue="$24,820.00" className="font-mono tnum text-right" /></div>
             <div className="w-[160px]"><Input type="date" defaultValue="2026-05-28" /></div>
             <div className="w-[200px]"><Input disabled defaultValue="Accrual basis" /></div>
-            <Kbd>⌘K</Kbd>
-            <Kbd>↵</Kbd>
+            <Kbd>âŒ˜K</Kbd>
+            <Kbd>â†µ</Kbd>
             <Kbd>esc</Kbd>
           </div>
         </Block>
@@ -270,7 +270,7 @@ function DS() {
             <Avatar size={32}>NL</Avatar>
             <Avatar size={28}>HC</Avatar>
             <Separator orientation="vertical" className="h-10" />
-            <AvatarRound size={36}>JR</AvatarRound>
+            <AvatarRound size={36}>ST</AvatarRound>
             <AvatarRound size={28}>PS</AvatarRound>
             <AvatarRound size={22}>MT</AvatarRound>
           </div>
@@ -280,11 +280,11 @@ function DS() {
           <div className="grid grid-cols-3 gap-4">
             <Card>
               <div className="p-5 relative">
-                <div className="text-[11px] uppercase tracking-wider text-text-soft font-medium mb-3">Total income · YTD</div>
+                <div className="text-[11px] uppercase tracking-wider text-text-soft font-medium mb-3">Total income Â· YTD</div>
                 <div className="font-mono tnum text-[28px] leading-none font-medium tracking-tight mb-2">
                   <span className="text-text-soft text-[0.7em] mr-1">$</span>1,247,830
                 </div>
-                <div className="text-[12px] text-muted-foreground"><span className="font-mono tnum text-positive font-medium">↑ +14.2%</span> vs prior YTD</div>
+                <div className="text-[12px] text-muted-foreground"><span className="font-mono tnum text-positive font-medium">â†‘ +14.2%</span> vs prior YTD</div>
                 <div className="absolute right-4 top-4 opacity-70">
                   <Sparkline values={[42,48,56,52,61,58,64,72,68,74,82,78]} color="hsl(var(--positive))" />
                 </div>
@@ -294,7 +294,7 @@ function DS() {
               <div className="p-5">
                 <div className="text-[11px] uppercase tracking-wider text-text-soft font-medium mb-3">Gross margin</div>
                 <div className="font-mono tnum text-[28px] leading-none font-medium tracking-tight mb-2">62.8<span className="text-text-soft">%</span></div>
-                <div className="text-[12px] text-muted-foreground"><span className="font-mono tnum text-positive font-medium">↑ +3.1 pts</span> vs prior YTD</div>
+                <div className="text-[12px] text-muted-foreground"><span className="font-mono tnum text-positive font-medium">â†‘ +3.1 pts</span> vs prior YTD</div>
               </div>
             </Card>
             <Card>
@@ -322,10 +322,10 @@ function DS() {
               </thead>
               <tbody>
                 {[
-                  ["05/24", "4010 Wholesale roasted coffee", "Blue Bottle — invoice #2241", "—", "12,480.00", <Badge key="b" variant="positive" dot>Reconciled</Badge>],
-                  ["05/24", "5010 Green coffee purchases",   "Cafe Imports — PO 8814",     "8,940.00", "—", <Badge key="b" variant="warning" dot>Needs review</Badge>],
-                  ["05/22", "6030 Rent & occupancy",         "Roastery lease — May",       "14,800.00", "—", <Badge key="b" variant="positive" dot>Reconciled</Badge>],
-                  ["05/21", "4020 Retail café sales",        "Square daily settlement",    "—", "6,210.40", <Badge key="b" variant="info">Auto</Badge>],
+                  ["05/24", "4010 Wholesale roasted coffee", "Blue Bottle â€” invoice #2241", "â€”", "12,480.00", <Badge key="b" variant="positive" dot>Reconciled</Badge>],
+                  ["05/24", "5010 Green coffee purchases",   "Cafe Imports â€” PO 8814",     "8,940.00", "â€”", <Badge key="b" variant="warning" dot>Needs review</Badge>],
+                  ["05/22", "6030 Rent & occupancy",         "Roastery lease â€” May",       "14,800.00", "â€”", <Badge key="b" variant="positive" dot>Reconciled</Badge>],
+                  ["05/21", "4020 Retail cafÃ© sales",        "Square daily settlement",    "â€”", "6,210.40", <Badge key="b" variant="info">Auto</Badge>],
                 ].map((r, i) => (
                   <tr key={i} className="border-b border-border/60 hover:bg-muted/60 transition-colors" style={{ height: 40 }}>
                     <td className="px-3 font-mono text-[12.5px]">{r[0]}</td>
@@ -343,7 +343,7 @@ function DS() {
       </Section>
 
       {/* ============================================================
-          05 · Number rules
+          05 Â· Number rules
           ============================================================ */}
       <Section no="05 / Patterns" title="Number rules"
                sub="Every number renders in IBM Plex Mono with tabular figures and zero-style slashed zero. Negatives wear parentheses; missing values render as an em-dash; future periods desaturate into the muted surface.">
@@ -359,8 +359,8 @@ function DS() {
             <tbody>
               <tr className="border-b border-border/60"><td className="px-3 h-10">Positive</td><td className="px-3 text-right font-mono tnum">12,480</td><td className="px-3 text-muted-foreground">Plain mono numeral, no sign</td></tr>
               <tr className="border-b border-border/60"><td className="px-3 h-10">Negative</td><td className="px-3 text-right font-mono tnum text-destructive">(3,420)</td><td className="px-3 text-muted-foreground">Accountant parentheses, negative color</td></tr>
-              <tr className="border-b border-border/60"><td className="px-3 h-10">Zero / no activity</td><td className="px-3 text-right font-mono text-text-soft">—</td><td className="px-3 text-muted-foreground">Em-dash, soft color — never the digit 0</td></tr>
-              <tr className="border-b border-border/60"><td className="px-3 h-10 bg-muted/60"><span>Future period</span></td><td className="px-3 text-right font-mono text-text-soft bg-muted/60">—</td><td className="px-3 text-muted-foreground">Muted surface tint signals "not yet posted"</td></tr>
+              <tr className="border-b border-border/60"><td className="px-3 h-10">Zero / no activity</td><td className="px-3 text-right font-mono text-text-soft">â€”</td><td className="px-3 text-muted-foreground">Em-dash, soft color â€” never the digit 0</td></tr>
+              <tr className="border-b border-border/60"><td className="px-3 h-10 bg-muted/60"><span>Future period</span></td><td className="px-3 text-right font-mono text-text-soft bg-muted/60">â€”</td><td className="px-3 text-muted-foreground">Muted surface tint signals "not yet posted"</td></tr>
               <tr className="border-b border-border/60"><td className="px-3 h-10">Subtotal</td><td className="px-3 text-right font-mono tnum font-semibold border-t border-border-strong">764,920</td><td className="px-3 text-muted-foreground">Top hairline + 600 weight</td></tr>
               <tr><td className="px-3 h-10">Grand total</td><td className="px-3 text-right font-mono tnum font-semibold text-primary" style={{ borderBottom: "3px double hsl(var(--border-strong))" }}>312,440</td><td className="px-3 text-muted-foreground">Double underline + primary color</td></tr>
             </tbody>
@@ -370,7 +370,7 @@ function DS() {
 
       <footer className="text-center pt-8 border-t border-border text-text-soft text-[13px]">
         <a className="inline-flex items-center gap-2 text-primary font-medium hover:underline"
-           href="Profit %26 Loss.html">See the system in production — open the P&amp;L screen →</a>
+           href="Profit %26 Loss.html">See the system in production â€” open the P&amp;L screen â†’</a>
       </footer>
     </div>
   );

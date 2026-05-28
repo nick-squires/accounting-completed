@@ -1,5 +1,5 @@
-/* global React, Button, AvatarRound, Avatar, Input, Kbd, cn */
-/* MAC · App shell — icons, role-aware Sidebar, Topbar with role chip. */
+﻿/* global React, Button, AvatarRound, Avatar, Input, Kbd, cn */
+/* MAC Â· App shell â€” icons, role-aware Sidebar, Topbar with role chip. */
 
 const Icn = ({ d, size = 16, fill = "none", stroke = "currentColor", sw = 1.6, className }) => (
   <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={stroke}
@@ -53,13 +53,13 @@ const I = {
 const ROLES = {
   staff: {
     label: "Firm staff",
-    user:  { name: "Jordan Reyes",   role: "Senior bookkeeper", initials: "JR" },
-    firm:  "Acme Bookkeeping Co.",
+    user:  { name: "Scott Turner",   role: "Senior bookkeeper", initials: "ST" },
+    firm:  "Records in Order",
     canSwitchClient: true,
   },
   owner: {
     label: "Business owner",
-    user:  { name: "Diego Marín",    role: "Owner & founder",   initials: "DM" },
+    user:  { name: "Diego MarÃ­n",    role: "Owner & founder",   initials: "DM" },
     firm:  null,
     canSwitchClient: false,
   },
@@ -115,7 +115,7 @@ function Sidebar({ activeKey = "pl",
                    role = "staff",
                    clientName = "Atlas Coffee Roasters",
                    clientInitials = "AC",
-                   clientSub = "FY 2026 · QBO synced",
+                   clientSub = "FY 2026 Â· QBO synced",
                    onClientClick }) {
   const r = ROLES[role] || ROLES.staff;
   const items = NAV.filter(n => n.roles.includes(role));
@@ -217,7 +217,7 @@ function Sidebar({ activeKey = "pl",
 }
 
 /* =========================================================
-   Topbar — role chip
+   Topbar â€” role chip
    ========================================================= */
 function Topbar({ crumbs = [], role = "staff", children }) {
   const pill = ROLE_PILL[role] || ROLE_PILL.staff;
@@ -235,10 +235,10 @@ function Topbar({ crumbs = [], role = "staff", children }) {
       <div className="relative w-[260px]">
         <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-soft">{I.search}</span>
         <input
-          placeholder="Search anything…"
+          placeholder="Search anythingâ€¦"
           className="w-full h-8 pl-8 pr-12 rounded-md bg-muted border border-border text-[13.5px] focus:outline-none focus:border-primary focus:ring-2 focus:ring-ring/30 focus:bg-card"
         />
-        <span className="absolute right-2 top-1/2 -translate-y-1/2"><Kbd>⌘K</Kbd></span>
+        <span className="absolute right-2 top-1/2 -translate-y-1/2"><Kbd>âŒ˜K</Kbd></span>
       </div>
       {/* Role chip */}
       <div className={cn("inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11.5px] font-medium whitespace-nowrap", pill.cls)}>

@@ -1,24 +1,24 @@
-/* global React, ReactDOM, PageShell, PageHeader, StatTile, Button, Badge, Card, CardHeader, CardTitle,
+﻿/* global React, ReactDOM, PageShell, PageHeader, StatTile, Button, Badge, Card, CardHeader, CardTitle,
             CardFooter, Tabs, TabsTrigger, AvatarRound, Sparkline, cn, I */
 
 const { useState, useMemo } = React;
 
 /* ---------- Rule data ---------- */
 const RULES = [
-  { id: "r1",  name: "Square Settlement",     pattern: "description starts with “SQUARE”",            account: "4020 Retail café sales",          hits: 142, accuracy: 100, lastHit: "2h ago",   status: "active", owner: "auto-learned" },
-  { id: "r2",  name: "Blue Bottle invoices",  pattern: "description contains “BLUE BOTTLE”",          account: "4010 Wholesale roasted coffee",   hits:  18, accuracy: 100, lastHit: "Yesterday",status: "active", owner: "Jordan R." },
-  { id: "r3",  name: "Stripe payouts",        pattern: "description equals “STRIPE TRANSFER”",        account: "4030 Subscription box revenue",   hits:  62, accuracy:  98, lastHit: "1h ago",   status: "active", owner: "Jordan R." },
-  { id: "r4",  name: "Gusto payroll",         pattern: "description starts with “GUSTO PAYROLL”",     account: "6010 Salaries & wages",           hits:  10, accuracy: 100, lastHit: "Yesterday",status: "active", owner: "Priya S." },
-  { id: "r5",  name: "Café imports — green",  pattern: "vendor is “Cafe Imports LLC”",                account: "5010 Green coffee purchases",     hits:  24, accuracy: 100, lastHit: "2d ago",   status: "active", owner: "Jordan R." },
-  { id: "r6",  name: "PG&E utilities",        pattern: "description contains “PG&E”",                 account: "6040 Utilities",                  hits:   5, accuracy: 100, lastHit: "5d ago",   status: "active", owner: "auto-learned" },
-  { id: "r7",  name: "Roastery lease",        pattern: "description equals “ROASTERY LEASE LLC”",      account: "6030 Rent & occupancy",           hits:   5, accuracy: 100, lastHit: "6d ago",   status: "active", owner: "Priya S." },
-  { id: "r8",  name: "State Farm insurance",  pattern: "description contains “STATE FARM”",           account: "6070 Insurance",                  hits:   5, accuracy: 100, lastHit: "1w ago",   status: "active", owner: "auto-learned" },
-  { id: "r9",  name: "Mailchimp",             pattern: "description equals “MAILCHIMP MONTHLY”",       account: "6060 Software & subscriptions",   hits:   5, accuracy: 100, lastHit: "1w ago",   status: "active", owner: "Jordan R." },
-  { id: "r10", name: "AT&T phone + net",      pattern: "description contains “AT&T”",                 account: "6040 Utilities",                  hits:   5, accuracy: 100, lastHit: "2w ago",   status: "active", owner: "auto-learned" },
-  { id: "r11", name: "Upwork freelancers",    pattern: "description contains “UPWORK”",               account: "6050 Marketing & advertising",    hits:   3, accuracy:  67, lastHit: "1w ago",   status: "review", owner: "Jordan R.", note: "Conflicts with 2 manual recategorizations" },
-  { id: "r12", name: "Amazon — uncategorized",pattern: "description contains “AMAZON” AND amount < $500", account: "(suggest at review)",         hits:  18, accuracy: null,lastHit: "2d ago",   status: "suggest", owner: "auto-learned", note: "Asks before applying" },
+  { id: "r1",  name: "Square Settlement",     pattern: "description starts with â€œSQUAREâ€",            account: "4020 Retail cafÃ© sales",          hits: 142, accuracy: 100, lastHit: "2h ago",   status: "active", owner: "auto-learned" },
+  { id: "r2",  name: "Blue Bottle invoices",  pattern: "description contains â€œBLUE BOTTLEâ€",          account: "4010 Wholesale roasted coffee",   hits:  18, accuracy: 100, lastHit: "Yesterday",status: "active", owner: "Scott T." },
+  { id: "r3",  name: "Stripe payouts",        pattern: "description equals â€œSTRIPE TRANSFERâ€",        account: "4030 Subscription box revenue",   hits:  62, accuracy:  98, lastHit: "1h ago",   status: "active", owner: "Scott T." },
+  { id: "r4",  name: "Gusto payroll",         pattern: "description starts with â€œGUSTO PAYROLLâ€",     account: "6010 Salaries & wages",           hits:  10, accuracy: 100, lastHit: "Yesterday",status: "active", owner: "Priya S." },
+  { id: "r5",  name: "CafÃ© imports â€” green",  pattern: "vendor is â€œCafe Imports LLCâ€",                account: "5010 Green coffee purchases",     hits:  24, accuracy: 100, lastHit: "2d ago",   status: "active", owner: "Scott T." },
+  { id: "r6",  name: "PG&E utilities",        pattern: "description contains â€œPG&Eâ€",                 account: "6040 Utilities",                  hits:   5, accuracy: 100, lastHit: "5d ago",   status: "active", owner: "auto-learned" },
+  { id: "r7",  name: "Roastery lease",        pattern: "description equals â€œROASTERY LEASE LLCâ€",      account: "6030 Rent & occupancy",           hits:   5, accuracy: 100, lastHit: "6d ago",   status: "active", owner: "Priya S." },
+  { id: "r8",  name: "State Farm insurance",  pattern: "description contains â€œSTATE FARMâ€",           account: "6070 Insurance",                  hits:   5, accuracy: 100, lastHit: "1w ago",   status: "active", owner: "auto-learned" },
+  { id: "r9",  name: "Mailchimp",             pattern: "description equals â€œMAILCHIMP MONTHLYâ€",       account: "6060 Software & subscriptions",   hits:   5, accuracy: 100, lastHit: "1w ago",   status: "active", owner: "Scott T." },
+  { id: "r10", name: "AT&T phone + net",      pattern: "description contains â€œAT&Tâ€",                 account: "6040 Utilities",                  hits:   5, accuracy: 100, lastHit: "2w ago",   status: "active", owner: "auto-learned" },
+  { id: "r11", name: "Upwork freelancers",    pattern: "description contains â€œUPWORKâ€",               account: "6050 Marketing & advertising",    hits:   3, accuracy:  67, lastHit: "1w ago",   status: "review", owner: "Scott T.", note: "Conflicts with 2 manual recategorizations" },
+  { id: "r12", name: "Amazon â€” uncategorized",pattern: "description contains â€œAMAZONâ€ AND amount < $500", account: "(suggest at review)",         hits:  18, accuracy: null,lastHit: "2d ago",   status: "suggest", owner: "auto-learned", note: "Asks before applying" },
   { id: "r13", name: "United / Delta travel", pattern: "merchant category = airlines",                account: "6080 Travel & entertainment",     hits:   6, accuracy:  83, lastHit: "1w ago",   status: "active", owner: "Marcus T." },
-  { id: "r14", name: "Old: Heartland POS",    pattern: "description contains “HEARTLAND”",            account: "4020 Retail café sales",          hits:   0, accuracy: null,lastHit: "—",        status: "inactive", owner: "Jordan R." },
+  { id: "r14", name: "Old: Heartland POS",    pattern: "description contains â€œHEARTLANDâ€",            account: "4020 Retail cafÃ© sales",          hits:   0, accuracy: null,lastHit: "â€”",        status: "inactive", owner: "Scott T." },
 ];
 
 const STATUS = {
@@ -31,7 +31,7 @@ const STATUS = {
 /* ---------- Suggested rules card ---------- */
 const SUGGESTIONS = [
   { desc: 'description contains "PG&E"',          account: "6040 Utilities",                  matches: 5,  confidence: 100 },
-  { desc: 'description contains "DOORDASH MERCHANT"', account: "4020 Retail café sales",      matches: 8,  confidence: 92 },
+  { desc: 'description contains "DOORDASH MERCHANT"', account: "4020 Retail cafÃ© sales",      matches: 8,  confidence: 92 },
   { desc: 'description equals "ADOBE *CC ALL APPS"', account: "6060 Software & subscriptions", matches: 5,  confidence: 100 },
 ];
 
@@ -57,7 +57,7 @@ function App() {
     <PageShell activeKey="cats" crumbs={["Setup", "Categories & rules"]}>
       <PageHeader
         title="Categories & rules"
-        sub={<>Atlas Coffee Roasters · <span className="font-mono text-foreground font-medium">{stats.active}</span> active rules categorized <span className="font-mono text-foreground">{stats.hits}</span> transactions this month</>}
+        sub={<>Atlas Coffee Roasters Â· <span className="font-mono text-foreground font-medium">{stats.active}</span> active rules categorized <span className="font-mono text-foreground">{stats.hits}</span> transactions this month</>}
         actions={
           <>
             <Button>{I.download}<span>Export rules</span></Button>
@@ -102,7 +102,7 @@ function App() {
                   <span className="font-medium">{s.account}</span>
                 </td>
                 <td className="px-3 align-middle py-3 text-text-soft text-[12px]">
-                  {s.matches} recent matches · {s.confidence}% confidence
+                  {s.matches} recent matches Â· {s.confidence}% confidence
                 </td>
                 <td className="px-5 align-middle py-3 text-right">
                   <div className="inline-flex items-center gap-2">
@@ -125,7 +125,7 @@ function App() {
         </Tabs>
         <div className="relative w-[280px]">
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-soft">{I.search}</span>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search rule name or pattern…"
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search rule name or patternâ€¦"
                  className="w-full h-8 pl-8 pr-3 rounded-md bg-card border border-border text-[13.5px] focus:outline-none focus:border-primary focus:ring-2 focus:ring-ring/30" />
         </div>
       </div>
@@ -156,7 +156,7 @@ function App() {
                     style={{ height: "var(--row-h, 56px)" }}>
                   <td className="px-4 align-middle">
                     <div className="flex items-center gap-2">
-                      <span className="text-text-soft cursor-grab font-mono text-[14px]">⋮⋮</span>
+                      <span className="text-text-soft cursor-grab font-mono text-[14px]">â‹®â‹®</span>
                       <span className="font-mono text-text-soft text-[11.5px]">{(i + 1).toString().padStart(2, "0")}</span>
                     </div>
                   </td>
@@ -178,7 +178,7 @@ function App() {
                   </td>
                   <td className="px-3 align-middle text-right font-mono tnum">{r.hits}</td>
                   <td className="px-3 align-middle text-right">
-                    {r.accuracy == null ? <span className="text-text-soft text-[12px]">—</span> : (
+                    {r.accuracy == null ? <span className="text-text-soft text-[12px]">â€”</span> : (
                       <div className="flex items-center justify-end gap-2">
                         <div className="w-12 h-1 bg-secondary rounded-full overflow-hidden">
                           <div className={cn("h-full rounded-full",
@@ -210,8 +210,8 @@ function App() {
 
         <CardFooter>
           <div className="flex items-center justify-between w-full">
-            <span>Showing <span className="font-mono text-foreground">{filtered.length}</span> of <span className="font-mono text-foreground">{RULES.length}</span> rules · drag to reorder priority</span>
-            <span>Rules engine v3 · evaluated bottom-up</span>
+            <span>Showing <span className="font-mono text-foreground">{filtered.length}</span> of <span className="font-mono text-foreground">{RULES.length}</span> rules Â· drag to reorder priority</span>
+            <span>Rules engine v3 Â· evaluated bottom-up</span>
           </div>
         </CardFooter>
       </Card>

@@ -1,17 +1,17 @@
-/* global React, ReactDOM, PageShell, PageHeader, StatTile, Button, Badge, Card, CardHeader, CardTitle,
+﻿/* global React, ReactDOM, PageShell, PageHeader, StatTile, Button, Badge, Card, CardHeader, CardTitle,
             CardContent, CardFooter, Avatar, AvatarRound, Sparkline, cn, I, CLIENTS */
 
 const { useState, useMemo } = React;
 
 /* ---------- Activity feed -------------------------------------------------- */
 const ACTIVITY = [
-  { who: "Priya S.",  initials: "PS", action: "approved 18 transactions for", client: "Northstar Logistics",  what: "Bank rules matched · $12,480.21", time: "8m ago", kind: "approve" },
-  { who: "Jordan R.", initials: "JR", action: "reconciled May statement for",  client: "Atlas Coffee Roasters", what: "Chase Business Checking ·5847", time: "32m ago", kind: "reconcile" },
-  { who: "System",    initials: "··", action: "pulled new bank transactions for", client: "Sentinel Security",  what: "14 new transactions from Finicity", time: "1h ago", kind: "system" },
-  { who: "Marcus T.", initials: "MT", action: "asked a question on",          client: "Meridian Dental Group", what: "“Is this travel re-imbursable?”", time: "2h ago", kind: "comment" },
+  { who: "Priya S.",  initials: "PS", action: "approved 18 transactions for", client: "Northstar Logistics",  what: "Bank rules matched Â· $12,480.21", time: "8m ago", kind: "approve" },
+  { who: "Scott T.", initials: "ST", action: "reconciled May statement for",  client: "Atlas Coffee Roasters", what: "Chase Business Checking Â·5847", time: "32m ago", kind: "reconcile" },
+  { who: "System",    initials: "Â·Â·", action: "pulled new bank transactions for", client: "Sentinel Security",  what: "14 new transactions from Finicity", time: "1h ago", kind: "system" },
+  { who: "Marcus T.", initials: "MT", action: "asked a question on",          client: "Meridian Dental Group", what: "â€œIs this travel re-imbursable?â€", time: "2h ago", kind: "comment" },
   { who: "Priya S.",  initials: "PS", action: "closed April period for",      client: "Halcyon Yoga Studio",   what: "Books locked through 04/30/26", time: "Yesterday", kind: "close" },
-  { who: "Jordan R.", initials: "JR", action: "created a new rule on",        client: "Atlas Coffee Roasters", what: "“Square Settlement” → 4020 Retail", time: "Yesterday", kind: "rule" },
-  { who: "System",    initials: "··", action: "flagged 2 duplicate entries on", client: "Bluepine Brewing",    what: "Possible duplicates · awaiting review", time: "2d ago", kind: "alert" },
+  { who: "Scott T.", initials: "ST", action: "created a new rule on",        client: "Atlas Coffee Roasters", what: "â€œSquare Settlementâ€ â†’ 4020 Retail", time: "Yesterday", kind: "rule" },
+  { who: "System",    initials: "Â·Â·", action: "flagged 2 duplicate entries on", client: "Bluepine Brewing",    what: "Possible duplicates Â· awaiting review", time: "2d ago", kind: "alert" },
 ];
 
 const ACTIVITY_ICON = {
@@ -46,12 +46,12 @@ function ActivityRow({ a }) {
 
 /* ---------- Deadlines list -------------------------------------------------- */
 const DEADLINES = [
-  { date: "May 30",  label: "Sales tax filing — CA",         client: "Atlas Coffee Roasters", in: "2 days", urgent: true },
-  { date: "May 31",  label: "Monthly close — May",           client: "Atlas Coffee Roasters", in: "3 days", urgent: true },
-  { date: "Jun 02",  label: "Quarterly estimates — Q2",      client: "Kestrel Studio",        in: "5 days" },
-  { date: "Jun 05",  label: "Form 941 — payroll taxes",      client: "Northstar Logistics",   in: "8 days" },
+  { date: "May 30",  label: "Sales tax filing â€” CA",         client: "Atlas Coffee Roasters", in: "2 days", urgent: true },
+  { date: "May 31",  label: "Monthly close â€” May",           client: "Atlas Coffee Roasters", in: "3 days", urgent: true },
+  { date: "Jun 02",  label: "Quarterly estimates â€” Q2",      client: "Kestrel Studio",        in: "5 days" },
+  { date: "Jun 05",  label: "Form 941 â€” payroll taxes",      client: "Northstar Logistics",   in: "8 days" },
   { date: "Jun 10",  label: "Worker's comp audit",           client: "Anchor & Oak Furniture",in: "13 days" },
-  { date: "Jun 15",  label: "Quarterly estimates — Q2",      client: "Sentinel Security",     in: "18 days" },
+  { date: "Jun 15",  label: "Quarterly estimates â€” Q2",      client: "Sentinel Security",     in: "18 days" },
 ];
 
 /* ---------- Workload (priority-sorted clients) ----------------------------- */
@@ -73,9 +73,9 @@ function WorkloadRow({ c }) {
         </div>
         <div className="text-[11.5px] text-text-soft mt-0.5">
           <span className="font-mono">{c.entity}</span>
-          <span className="mx-1.5">·</span>
+          <span className="mx-1.5">Â·</span>
           <span>{c.industry}</span>
-          <span className="mx-1.5">·</span>
+          <span className="mx-1.5">Â·</span>
           <span>Owner: <span className="text-foreground/80">{c.owner}</span></span>
         </div>
       </div>
@@ -98,7 +98,7 @@ function App() {
       tasks: active.reduce((s, c) => s + c.openTasks, 0),
       review: active.filter(c => c.flag === "needs-review").length,
       clean: active.filter(c => c.openTasks === 0 && c.flag !== "archived").length,
-      mine: active.filter(c => c.owner === "Jordan R.").length,
+      mine: active.filter(c => c.owner === "Scott T.").length,
       newFeeds: 7,
     };
   }, []);
@@ -106,7 +106,7 @@ function App() {
   const workload = useMemo(() => {
     const active = CLIENTS.filter(c => c.flag !== "archived");
     let list = active;
-    if (filter === "mine") list = list.filter(c => c.owner === "Jordan R.");
+    if (filter === "mine") list = list.filter(c => c.owner === "Scott T.");
     if (filter === "review") list = list.filter(c => c.flag === "needs-review");
     // Sort: review first, then by openTasks desc, then pinned
     return [...list].sort((a, b) => {
@@ -121,10 +121,10 @@ function App() {
       <div className="mb-6 flex items-end justify-between gap-6 flex-wrap">
         <div>
           <div className="text-[12px] text-text-soft font-medium uppercase tracking-wider mb-1">
-            Thursday · May 28
+            Thursday Â· May 28
           </div>
           <h1 className="text-[32px] leading-[1.1] font-semibold tracking-tight m-0">
-            Good morning, Jordan.
+            Good morning, Scott.
           </h1>
           <p className="text-[15px] text-muted-foreground mt-2 max-w-[60ch]" style={{ textWrap: "pretty" }}>
             You have <span className="text-foreground font-medium font-mono tnum">{stats.tasks}</span> open items across <span className="text-foreground font-medium font-mono tnum">{stats.mine}</span> clients. <span className="text-warning font-medium">{stats.review} clients need review today.</span>
@@ -191,7 +191,7 @@ function App() {
 
           <CardFooter>
             <div className="flex items-center justify-between w-full">
-              <span>Showing top <span className="font-mono text-foreground">{workload.length}</span> · <a href="Clients.html" className="text-primary hover:underline">See all clients →</a></span>
+              <span>Showing top <span className="font-mono text-foreground">{workload.length}</span> Â· <a href="Clients.html" className="text-primary hover:underline">See all clients â†’</a></span>
               <span>Updated <span className="font-mono text-foreground">just now</span></span>
             </div>
           </CardFooter>
@@ -203,7 +203,7 @@ function App() {
           <Card>
             <CardHeader>
               <CardTitle>Upcoming deadlines</CardTitle>
-              <a href="#" className="text-[12px] text-primary hover:underline">Calendar →</a>
+              <a href="#" className="text-[12px] text-primary hover:underline">Calendar â†’</a>
             </CardHeader>
             <div className="px-5 py-2">
               {DEADLINES.map((d, i) => (
@@ -233,7 +233,7 @@ function App() {
           <Card>
             <CardHeader>
               <CardTitle>Activity</CardTitle>
-              <a href="#" className="text-[12px] text-primary hover:underline">All →</a>
+              <a href="#" className="text-[12px] text-primary hover:underline">All â†’</a>
             </CardHeader>
             <div className="px-5 py-2">
               {ACTIVITY.map((a, i) => <ActivityRow key={i} a={a} />)}

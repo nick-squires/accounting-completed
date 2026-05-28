@@ -1,4 +1,4 @@
-/* global React, ReactDOM, PageShell, PageHeader, StatTile, Button, Input, Kbd, Badge,
+﻿/* global React, ReactDOM, PageShell, PageHeader, StatTile, Button, Input, Kbd, Badge,
             Card, CardHeader, CardTitle, CardFooter, Tabs, TabsTrigger, AvatarRound, cn, I */
 
 const { useState, useMemo } = React;
@@ -8,23 +8,23 @@ const ENTRIES = [
   {
     id: "JE-2026-0042",
     date: "May 24, 2026", iso: "2026-05-24",
-    memo: "Depreciation — May 2026",
-    status: "approved", approver: "Jordan R.", createdBy: "Jordan R.",
+    memo: "Depreciation â€” May 2026",
+    status: "approved", approver: "Scott T.", createdBy: "Scott T.",
     expanded: true,
     lines: [
-      { account: "5900 Depreciation expense",      memo: "Roasting equipment · monthly", debit: 1480.00, credit: null },
-      { account: "5900 Depreciation expense",      memo: "Café build-out · monthly",      debit:  775.00, credit: null },
-      { account: "5900 Depreciation expense",      memo: "Vehicles · monthly",            debit:  135.00, credit: null },
+      { account: "5900 Depreciation expense",      memo: "Roasting equipment Â· monthly", debit: 1480.00, credit: null },
+      { account: "5900 Depreciation expense",      memo: "CafÃ© build-out Â· monthly",      debit:  775.00, credit: null },
+      { account: "5900 Depreciation expense",      memo: "Vehicles Â· monthly",            debit:  135.00, credit: null },
       { account: "1590 Accumulated depreciation",  memo: "Contra-asset",                  debit: null,    credit: 2390.00 },
     ],
   },
   {
     id: "JE-2026-0041",
     date: "May 22, 2026", iso: "2026-05-22",
-    memo: "Reclassify Square refunds → 4020 contra",
-    status: "approved", approver: "Priya S.", createdBy: "Jordan R.",
+    memo: "Reclassify Square refunds â†’ 4020 contra",
+    status: "approved", approver: "Priya S.", createdBy: "Scott T.",
     lines: [
-      { account: "4020 Retail café sales",     debit: 480.00, credit: null },
+      { account: "4020 Retail cafÃ© sales",     debit: 480.00, credit: null },
       { account: "4025 Sales refunds",         debit: null,    credit: 480.00 },
     ],
   },
@@ -52,8 +52,8 @@ const ENTRIES = [
   {
     id: "JE-2026-0038",
     date: "May 10, 2026", iso: "2026-05-10",
-    memo: "Owner contribution — Q2 funding",
-    status: "approved", approver: "Jordan R.", createdBy: "Jordan R.",
+    memo: "Owner contribution â€” Q2 funding",
+    status: "approved", approver: "Scott T.", createdBy: "Scott T.",
     lines: [
       { account: "1010 Operating checking",    debit: 25000.00, credit: null },
       { account: "3010 Owner's equity",        debit: null,      credit: 25000.00 },
@@ -62,11 +62,11 @@ const ENTRIES = [
   {
     id: "JE-2026-0037",
     date: "May 03, 2026", iso: "2026-05-03",
-    memo: "Inventory adjustment — physical count",
-    status: "approved", approver: "Jordan R.", createdBy: "Priya S.",
+    memo: "Inventory adjustment â€” physical count",
+    status: "approved", approver: "Scott T.", createdBy: "Priya S.",
     lines: [
       { account: "5050 Inventory shrinkage",   debit: 184.20, credit: null },
-      { account: "1300 Inventory — green",     debit: null,    credit: 184.20 },
+      { account: "1300 Inventory â€” green",     debit: null,    credit: 184.20 },
     ],
   },
 ];
@@ -101,13 +101,13 @@ function EntryCard({ e, expanded, onToggle }) {
             <div className="font-medium truncate">{e.memo}</div>
             <div className="text-[12px] text-text-soft mt-0.5">
               <span className="font-mono">{e.iso}</span>
-              <span className="mx-1.5">·</span>
+              <span className="mx-1.5">Â·</span>
               <span>{e.lines.length} lines</span>
-              <span className="mx-1.5">·</span>
+              <span className="mx-1.5">Â·</span>
               <span>by <span className="text-foreground/80">{e.createdBy}</span></span>
               {e.approver && (
                 <>
-                  <span className="mx-1.5">·</span>
+                  <span className="mx-1.5">Â·</span>
                   <span>approved by <span className="text-foreground/80">{e.approver}</span></span>
                 </>
               )}
@@ -144,9 +144,9 @@ function EntryCard({ e, expanded, onToggle }) {
                     <span className="font-mono text-text-soft text-[11px] mr-2">{l.account.split(" ")[0]}</span>
                     {l.account.split(" ").slice(1).join(" ")}
                   </td>
-                  <td className="px-3 align-middle text-muted-foreground text-[12.5px]">{l.memo || <span className="text-text-soft">—</span>}</td>
-                  <td className="px-3 align-middle text-right font-mono tnum text-positive">{l.debit ? fmtN(l.debit) : <span className="text-text-soft">—</span>}</td>
-                  <td className="px-3 align-middle text-right font-mono tnum text-destructive">{l.credit ? fmtN(l.credit) : <span className="text-text-soft">—</span>}</td>
+                  <td className="px-3 align-middle text-muted-foreground text-[12.5px]">{l.memo || <span className="text-text-soft">â€”</span>}</td>
+                  <td className="px-3 align-middle text-right font-mono tnum text-positive">{l.debit ? fmtN(l.debit) : <span className="text-text-soft">â€”</span>}</td>
+                  <td className="px-3 align-middle text-right font-mono tnum text-destructive">{l.credit ? fmtN(l.credit) : <span className="text-text-soft">â€”</span>}</td>
                 </tr>
               ))}
               <tr className="bg-secondary/60 border-t-2 border-border-strong">
@@ -163,12 +163,12 @@ function EntryCard({ e, expanded, onToggle }) {
                 <>
                   <span className="w-2 h-2 rounded-full bg-positive"></span>
                   <span className="text-positive font-medium">Balanced</span>
-                  <span className="text-text-soft">— debits and credits agree</span>
+                  <span className="text-text-soft">â€” debits and credits agree</span>
                 </>
               ) : (
                 <>
                   <span className="w-2 h-2 rounded-full bg-destructive"></span>
-                  <span className="text-destructive font-medium">Out of balance · {fmtN(Math.abs(debits - credits))}</span>
+                  <span className="text-destructive font-medium">Out of balance Â· {fmtN(Math.abs(debits - credits))}</span>
                 </>
               )}
             </div>
@@ -212,7 +212,7 @@ function App() {
     <PageShell activeKey="journal" crumbs={["Reports", "General Journal"]}>
       <PageHeader
         title="General Journal"
-        sub={<>Atlas Coffee Roasters · <span className="font-mono text-foreground font-medium">{stats.total} entries</span> this month · <span className="text-warning">{stats.drafts} draft</span></>}
+        sub={<>Atlas Coffee Roasters Â· <span className="font-mono text-foreground font-medium">{stats.total} entries</span> this month Â· <span className="text-warning">{stats.drafts} draft</span></>}
         actions={
           <>
             <Button>{I.download}<span>Export</span></Button>

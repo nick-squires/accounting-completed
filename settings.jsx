@@ -1,4 +1,4 @@
-/* global React, ReactDOM, PageShell, PageHeader, Button, Input, Badge, Card, CardHeader, CardTitle,
+﻿/* global React, ReactDOM, PageShell, PageHeader, Button, Input, Badge, Card, CardHeader, CardTitle,
             CardFooter, AvatarRound, cn, I */
 
 const { useState } = React;
@@ -28,11 +28,11 @@ const SETTINGS_NAV = [
 ];
 
 const CLOSING_HISTORY = [
-  { period: "Apr 2026", closedAt: "2026-05-08", closedBy: "Jordan Reyes", entries: 217, locked: true },
+  { period: "Apr 2026", closedAt: "2026-05-08", closedBy: "Scott Turner", entries: 217, locked: true },
   { period: "Mar 2026", closedAt: "2026-04-09", closedBy: "Priya Sharma", entries: 184, locked: true },
-  { period: "Feb 2026", closedAt: "2026-03-12", closedBy: "Jordan Reyes", entries: 195, locked: true },
+  { period: "Feb 2026", closedAt: "2026-03-12", closedBy: "Scott Turner", entries: 195, locked: true },
   { period: "Jan 2026", closedAt: "2026-02-14", closedBy: "Adelina Costa", entries: 168, locked: true },
-  { period: "Dec 2025 · year-end", closedAt: "2026-01-22", closedBy: "Adelina Costa", entries: 412, locked: true, yearEnd: true },
+  { period: "Dec 2025 Â· year-end", closedAt: "2026-01-22", closedBy: "Adelina Costa", entries: 412, locked: true, yearEnd: true },
 ];
 
 const CHECKLIST = [
@@ -52,7 +52,7 @@ function SettingsRail({ active, onChange }) {
     <aside className="w-[240px] flex-shrink-0 border-r border-border bg-card overflow-y-auto">
       <div className="p-4 border-b border-border/60">
         <div className="text-[11px] uppercase tracking-wider text-text-soft font-medium">Settings</div>
-        <div className="font-semibold text-[15px] mt-1">Acme Bookkeeping Co.</div>
+        <div className="font-semibold text-[15px] mt-1">Records in Order</div>
       </div>
       <nav className="py-2">
         {SETTINGS_NAV.map((g, gi) => (
@@ -88,7 +88,7 @@ function ClosingPeriodSection() {
 
   return (
     <div className="max-w-[920px]">
-      <div className="mb-2 text-[11px] uppercase tracking-wider text-text-soft font-medium">Firm · Atlas Coffee Roasters</div>
+      <div className="mb-2 text-[11px] uppercase tracking-wider text-text-soft font-medium">Firm Â· Atlas Coffee Roasters</div>
       <h2 className="text-[24px] leading-7 font-semibold tracking-tight mb-1">Closing period</h2>
       <p className="text-[14px] text-muted-foreground mb-8 max-w-[60ch]" style={{ textWrap: "pretty" }}>
         Lock a period after it's been reviewed. Closed periods can't be edited without admin approval, protecting reported numbers from drift.
@@ -100,7 +100,7 @@ function ClosingPeriodSection() {
           <div>
             <div className="text-[11px] uppercase tracking-wider opacity-70 mb-1">Books closed through</div>
             <div className="font-mono text-[36px] leading-none font-semibold tracking-tight">April 30, 2026</div>
-            <div className="text-[13px] opacity-80 mt-2">Closed by <span className="font-medium">Jordan Reyes</span> · May 8, 2026</div>
+            <div className="text-[13px] opacity-80 mt-2">Closed by <span className="font-medium">Scott Turner</span> Â· May 8, 2026</div>
           </div>
           <div className="text-right">
             <Button variant="secondary" className="bg-white/15 text-white border-white/20 hover:bg-white/25">
@@ -155,7 +155,7 @@ function ClosingPeriodSection() {
                   {c.count}
                 </span>
                 {!c.done && (
-                  <Button size="sm" variant="ghost" className="text-primary">Review →</Button>
+                  <Button size="sm" variant="ghost" className="text-primary">Review â†’</Button>
                 )}
               </div>
             ))}
@@ -170,7 +170,7 @@ function ClosingPeriodSection() {
         </CardHeader>
         <div className="p-5 space-y-5">
           <SettingRow label="Allow reopening closed periods"
-                      sub="Without this, even admins can't edit closed books — period."
+                      sub="Without this, even admins can't edit closed books â€” period."
                       control={<Toggle value={true} />} />
           <SettingRow label="Require admin password"
                       sub="A firm admin must enter their password to confirm reopening."
@@ -188,7 +188,7 @@ function ClosingPeriodSection() {
       <Card>
         <CardHeader>
           <CardTitle>Recent closings</CardTitle>
-          <a href="#" className="text-[12px] text-primary hover:underline">Audit log →</a>
+          <a href="#" className="text-[12px] text-primary hover:underline">Audit log â†’</a>
         </CardHeader>
         <table className="w-full text-[13.5px]">
           <thead className="bg-muted/60 border-b border-border/60">
@@ -269,11 +269,11 @@ function App() {
           {active === "closing" && <ClosingPeriodSection />}
           {active !== "closing" && (
             <div className="max-w-[920px]">
-              <div className="mb-2 text-[11px] uppercase tracking-wider text-text-soft font-medium">Firm · Acme Bookkeeping Co.</div>
+              <div className="mb-2 text-[11px] uppercase tracking-wider text-text-soft font-medium">Firm Â· Records in Order</div>
               <h2 className="text-[24px] leading-7 font-semibold tracking-tight mb-1 capitalize">{active}</h2>
               <p className="text-[14px] text-muted-foreground mb-8">This section is part of the design system but not detailed in this mock-up. The closing period view is the canonical example.</p>
               <Card className="p-10 text-center text-muted-foreground">
-                <button onClick={() => setActive("closing")} className="text-primary hover:underline">← Back to Closing period</button>
+                <button onClick={() => setActive("closing")} className="text-primary hover:underline">â† Back to Closing period</button>
               </Card>
             </div>
           )}

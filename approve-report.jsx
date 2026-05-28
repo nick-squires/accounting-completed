@@ -1,32 +1,32 @@
-/* global React, ReactDOM, PageShell, Button, Input, Badge, Card, CardHeader, CardTitle, CardFooter,
+﻿/* global React, ReactDOM, PageShell, Button, Input, Badge, Card, CardHeader, CardTitle, CardFooter,
             Avatar, AvatarRound, Sparkline, cn, I */
 
 const { useState } = React;
 
 const QUEUE = [
-  { id: "r1", type: "P&L",          period: "May 2026",      client: "Atlas Coffee Roasters",  preparer: "Jordan R.", age: "2h",  amount: "$184,200", priority: "high"   },
-  { id: "r2", type: "Balance Sheet",period: "May 2026",      client: "Atlas Coffee Roasters",  preparer: "Jordan R.", age: "2h",  amount: "—",        priority: "high"   },
+  { id: "r1", type: "P&L",          period: "May 2026",      client: "Atlas Coffee Roasters",  preparer: "Scott T.", age: "2h",  amount: "$184,200", priority: "high"   },
+  { id: "r2", type: "Balance Sheet",period: "May 2026",      client: "Atlas Coffee Roasters",  preparer: "Scott T.", age: "2h",  amount: "â€”",        priority: "high"   },
   { id: "r3", type: "P&L",          period: "May 2026",      client: "Kestrel Studio",          preparer: "Marcus T.", age: "5h",  amount: "$42,180",  priority: "normal" },
   { id: "r4", type: "P&L",          period: "April 2026",    client: "Northstar Logistics",     preparer: "Priya S.",  age: "1d",  amount: "$184,200", priority: "low"    },
-  { id: "r5", type: "Year-end pkg.",period: "FY 2025",       client: "Highwire Climbing",       preparer: "Marcus T.", age: "3d",  amount: "—",        priority: "normal" },
+  { id: "r5", type: "Year-end pkg.",period: "FY 2025",       client: "Highwire Climbing",       preparer: "Marcus T.", age: "3d",  amount: "â€”",        priority: "normal" },
 ];
 
 const COMMENTS = [
-  { who: "Jordan R.", initials: "JR", time: "2h ago",
-    text: "Marketing spend bumped 60% vs April due to the Brew/Sip launch — confirmed with Diego. Tagging it for the variance note.",
+  { who: "Scott T.", initials: "ST", time: "2h ago",
+    text: "Marketing spend bumped 60% vs April due to the Brew/Sip launch â€” confirmed with Diego. Tagging it for the variance note.",
     role: "preparer" },
   { who: "Priya S.",  initials: "PS", time: "1h ago",
-    text: "Looks reasonable. Two questions:\n1) Is the Upwork freelancer cost going under 6050 or shouldn't it be COGS?\n2) Inventory shrink — confirm with the physical count?",
+    text: "Looks reasonable. Two questions:\n1) Is the Upwork freelancer cost going under 6050 or shouldn't it be COGS?\n2) Inventory shrink â€” confirm with the physical count?",
     role: "reviewer" },
-  { who: "Jordan R.", initials: "JR", time: "45m ago",
-    text: "1) 6050 is right — that's marketing design work, not coffee. 2) Already confirmed shrink. JE-2026-0037.",
+  { who: "Scott T.", initials: "ST", time: "45m ago",
+    text: "1) 6050 is right â€” that's marketing design work, not coffee. 2) Already confirmed shrink. JE-2026-0037.",
     role: "preparer" },
 ];
 
 const CHECKLIST = [
-  { label: "Bank reconciliation complete", done: true, note: "3/3 accounts · last variance $0.00" },
+  { label: "Bank reconciliation complete", done: true, note: "3/3 accounts Â· last variance $0.00" },
   { label: "All transactions categorized", done: true, note: "0 in review queue" },
-  { label: "AR + AP reviewed", done: true, note: "AR $48,220 · AP $38,420" },
+  { label: "AR + AP reviewed", done: true, note: "AR $48,220 Â· AP $38,420" },
   { label: "Depreciation entry posted", done: true, note: "JE-2026-0042" },
   { label: "Trial balance balances", done: true, note: "Debits = Credits" },
   { label: "Period locked", done: false, note: "will lock on approval" },
@@ -34,7 +34,7 @@ const CHECKLIST = [
 
 const REPORT_LINES = [
   { label: "Wholesale roasted coffee",  value: 224180, type: "income" },
-  { label: "Retail café sales",          value: 168340, type: "income" },
+  { label: "Retail cafÃ© sales",          value: 168340, type: "income" },
   { label: "Subscription box revenue",   value:  55980, type: "income" },
   { label: "Merchandise & retail",       value:  16450, type: "income" },
   { label: "Other operating income",     value:   1420, type: "income" },
@@ -93,13 +93,13 @@ function App() {
                           active ? "bg-accent" : "hover:bg-muted/40"
                         )}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className={cn("font-medium text-[13.5px]", active ? "text-primary" : "")}>{r.type} · {r.period}</span>
+                    <span className={cn("font-medium text-[13.5px]", active ? "text-primary" : "")}>{r.type} Â· {r.period}</span>
                     <Badge variant={p.variant} dot={r.priority !== "low"}>{p.label}</Badge>
                   </div>
                   <div className="text-[12px] text-foreground truncate">{r.client}</div>
                   <div className="flex items-center justify-between text-[11px] text-text-soft">
                     <span>by {r.preparer}</span>
-                    <span className="font-mono tnum">{r.age} ago · {r.amount}</span>
+                    <span className="font-mono tnum">{r.age} ago Â· {r.amount}</span>
                   </div>
                 </button>
               );
@@ -108,7 +108,7 @@ function App() {
           <div className="border-t border-border/60 px-4 py-3 text-[11.5px] text-text-soft">
             <span className="inline-flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-warning" /> 2 overdue
-              <span className="mx-2">·</span>
+              <span className="mx-2">Â·</span>
               <span className="w-1.5 h-1.5 rounded-full bg-positive" /> avg approval 4.2h
             </span>
           </div>
@@ -121,14 +121,14 @@ function App() {
             <div>
               <div className="flex items-center gap-2 text-[12.5px] text-text-soft mb-1">
                 <span>For review</span>
-                <span>·</span>
+                <span>Â·</span>
                 <span className="font-mono">{selected.id.toUpperCase()}-{selected.period.replace(" ", "-").toUpperCase()}</span>
               </div>
               <h1 className="text-[26px] leading-7 font-semibold tracking-tight m-0 mb-1">
-                {selected.type} · {selected.period}
+                {selected.type} Â· {selected.period}
               </h1>
               <p className="text-[14px] text-muted-foreground">
-                <span className="font-medium text-foreground">{selected.client}</span> · prepared by <span className="font-medium text-foreground">{selected.preparer}</span> · awaiting your sign-off
+                <span className="font-medium text-foreground">{selected.client}</span> Â· prepared by <span className="font-medium text-foreground">{selected.preparer}</span> Â· awaiting your sign-off
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -145,9 +145,9 @@ function App() {
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <CardTitle>Income statement preview</CardTitle>
-                  <span className="text-[12px] text-muted-foreground">May 1 → May 31, 2026 · accrual basis</span>
+                  <span className="text-[12px] text-muted-foreground">May 1 â†’ May 31, 2026 Â· accrual basis</span>
                 </div>
-                <a href="Profit %26 Loss.html" className="text-[12px] text-primary hover:underline">Open full report →</a>
+                <a href="Profit %26 Loss.html" className="text-[12px] text-primary hover:underline">Open full report â†’</a>
               </CardHeader>
               <table className="w-full text-[13.5px]">
                 <tbody>
@@ -186,14 +186,14 @@ function App() {
                 <div className="p-4">
                   <div className="text-[11px] uppercase tracking-wider text-text-soft font-medium mb-2">Prepared by</div>
                   <div className="flex items-center gap-3 mb-3">
-                    <AvatarRound size={32}>JR</AvatarRound>
+                    <AvatarRound size={32}>ST</AvatarRound>
                     <div>
-                      <div className="text-[13.5px] font-medium">{selected.preparer === "Jordan R." ? "Jordan Reyes" : selected.preparer}</div>
-                      <div className="text-[11.5px] text-text-soft">Senior bookkeeper · submitted 2h ago</div>
+                      <div className="text-[13.5px] font-medium">{selected.preparer === "Scott T." ? "Scott Turner" : selected.preparer}</div>
+                      <div className="text-[11.5px] text-text-soft">Senior bookkeeper Â· submitted 2h ago</div>
                     </div>
                   </div>
                   <div className="rounded-md bg-muted/60 p-3 text-[12.5px] text-muted-foreground italic" style={{ textWrap: "pretty" }}>
-                    "Strong month — marketing spend up vs April but variance accepted by owner. Ready for sign-off."
+                    "Strong month â€” marketing spend up vs April but variance accepted by owner. Ready for sign-off."
                   </div>
                 </div>
               </Card>
@@ -234,7 +234,7 @@ function App() {
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-[12px] font-medium">{c.who}</span>
                           <span className="text-[10.5px] text-text-soft uppercase tracking-wider">{c.role}</span>
-                          <span className="text-[10.5px] text-text-soft">· {c.time}</span>
+                          <span className="text-[10.5px] text-text-soft">Â· {c.time}</span>
                         </div>
                         <div className="text-[12.5px] whitespace-pre-wrap" style={{ textWrap: "pretty" }}>{c.text}</div>
                       </div>
@@ -242,7 +242,7 @@ function App() {
                   ))}
                 </div>
                 <div className="border-t border-border/60 p-3 flex items-center gap-2">
-                  <input placeholder="Reply or @mention…"
+                  <input placeholder="Reply or @mentionâ€¦"
                          className="flex-1 h-8 px-3 rounded-md bg-card border border-input text-[13px] focus:outline-none focus:border-primary focus:ring-2 focus:ring-ring/30" />
                   <Button size="sm" variant="primary">Post</Button>
                 </div>

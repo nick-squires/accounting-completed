@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Accounting Completed — Profit &amp; Loss (Print)</title>
+<title>Accounting Completed â€” Profit &amp; Loss (Print)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -49,7 +49,7 @@
   }
 
   /* Hide the in-page toolbar (Tabs / period buttons / Refresh / Export / Share),
-     KPI sparklines, and the legend in the card footer — keep the numbers themselves. */
+     KPI sparklines, and the legend in the card footer â€” keep the numbers themselves. */
   .toolbar-noprint,
   main > div:first-of-type > div:nth-of-type(2),  /* page-head toolbar column */
   .kpi-spark { display: none !important; }
@@ -73,7 +73,7 @@
     min-width: 160px !important;
   }
 
-  /* P&L table — sticky-first-column + dense rows (carried over from app) */
+  /* P&L table â€” sticky-first-column + dense rows (carried over from app) */
   .pl-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; }
   .pl-table th, .pl-table td {
     padding: 0 10px;
@@ -174,7 +174,7 @@
         "label": "Income",
         "accounts": [
           { "code": "4010", "name": "Wholesale roasted coffee", "vals": [184200, 196480, 211340, 198750, 224180, 0,0,0,0,0,0,0] },
-          { "code": "4020", "name": "Retail café sales",         "vals": [142560, 138210, 156870, 161220, 168340, 0,0,0,0,0,0,0] },
+          { "code": "4020", "name": "Retail cafÃ© sales",         "vals": [142560, 138210, 156870, 161220, 168340, 0,0,0,0,0,0,0] },
           { "code": "4030", "name": "Subscription box revenue",  "vals": [ 48100,  49260,  51380,  53420,  55980, 0,0,0,0,0,0,0] },
           { "code": "4040", "name": "Merchandise & retail goods","vals": [ 12480,  10920,  14210,  13680,  16450, 0,0,0,0,0,0,0] },
           { "code": "4090", "name": "Other operating income",    "vals": [   850,   1200,    640,    980,   1420, 0,0,0,0,0,0,0] }
@@ -211,19 +211,19 @@
   </script>
 
   <!-- ============================================================
-       Print-only Income Statement (self-contained — does NOT use
+       Print-only Income Statement (self-contained â€” does NOT use
        PageShell so the app chrome is never even mounted).
        ============================================================ -->
   <script type="text/babel">
     const { useMemo } = React;
     const MONTHS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
     const fmt = (n) => {
-      if (n === 0) return "—";
+      if (n === 0) return "â€”";
       const abs = Math.abs(n);
       const s = abs.toLocaleString("en-US", { maximumFractionDigits: 0 });
       return n < 0 ? `(${s})` : s;
     };
-    const fmtPct = (n) => (n === null || isNaN(n)) ? "—" : `${(n * 100).toFixed(1)}%`;
+    const fmtPct = (n) => (n === null || isNaN(n)) ? "â€”" : `${(n * 100).toFixed(1)}%`;
 
     function PrintReport() {
       const data = JSON.parse(document.getElementById("data-pl").textContent);
@@ -285,12 +285,12 @@
                 Income statement trend analysis
               </h1>
               <div style={{ fontSize: 11.5, color: "hsl(var(--muted-foreground))" }}>
-                Atlas Coffee Roasters · <span style={{ fontFamily: "IBM Plex Mono", color: "hsl(var(--foreground))", fontWeight: 500 }}>Jan 1, 2026 → Dec 31, 2026</span> · as of May 28, 2026 · accrual basis · USD
+                Atlas Coffee Roasters Â· <span style={{ fontFamily: "IBM Plex Mono", color: "hsl(var(--foreground))", fontWeight: 500 }}>Jan 1, 2026 â†’ Dec 31, 2026</span> Â· as of May 28, 2026 Â· accrual basis Â· USD
               </div>
             </div>
             <div style={{ textAlign: "right", fontSize: 10, color: "hsl(var(--text-soft))", lineHeight: 1.4 }}>
-              <div>Prepared by <span style={{ color: "hsl(var(--foreground))", fontWeight: 500 }}>Jordan Reyes</span></div>
-              <div>Synced from <span style={{ fontFamily: "IBM Plex Mono", color: "hsl(var(--foreground))" }}>QBO</span> · 19 accounts</div>
+              <div>Prepared by <span style={{ color: "hsl(var(--foreground))", fontWeight: 500 }}>Scott Turner</span></div>
+              <div>Synced from <span style={{ fontFamily: "IBM Plex Mono", color: "hsl(var(--foreground))" }}>QBO</span> Â· 19 accounts</div>
               <div style={{ marginTop: 4 }}>Printed <span style={{ fontFamily: "IBM Plex Mono" }}>2026-05-28</span></div>
             </div>
           </header>
@@ -368,11 +368,11 @@
           {/* Footer note */}
           <div style={{ marginTop: 16, paddingTop: 10, borderTop: "1px solid hsl(var(--border))", display: "flex", justifyContent: "space-between", fontSize: 9.5, color: "hsl(var(--text-soft))" }}>
             <div>
-              <span style={{ fontFamily: "IBM Plex Mono", color: "hsl(var(--destructive))" }}>(xxx)</span> = negative value &nbsp;·&nbsp;
-              <span style={{ fontFamily: "IBM Plex Mono" }}>—</span> = no activity &nbsp;·&nbsp;
+              <span style={{ fontFamily: "IBM Plex Mono", color: "hsl(var(--destructive))" }}>(xxx)</span> = negative value &nbsp;Â·&nbsp;
+              <span style={{ fontFamily: "IBM Plex Mono" }}>â€”</span> = no activity &nbsp;Â·&nbsp;
               <span style={{ background: "hsl(var(--muted))", padding: "0 4px" }}>shaded</span> = projected / future period
             </div>
-            <div style={{ fontFamily: "IBM Plex Mono" }}>Accounting Completed · confidential</div>
+            <div style={{ fontFamily: "IBM Plex Mono" }}>Accounting Completed Â· confidential</div>
           </div>
         </div>
       );

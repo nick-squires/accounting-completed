@@ -1,4 +1,4 @@
-/* global React, ReactDOM, PageShell, Button, Input, Kbd, Badge, Card, CardHeader, CardTitle,
+﻿/* global React, ReactDOM, PageShell, Button, Input, Kbd, Badge, Card, CardHeader, CardTitle,
             CardFooter, Avatar, AvatarRound, cn, I */
 
 const { useState, useMemo } = React;
@@ -114,7 +114,7 @@ function StepBasics({ form, setForm }) {
           <Field label="Business name" required>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Atlas Coffee Roasters" />
           </Field>
-          <Field label="Doing business as (DBA)" hint="Optional — used on financial statements">
+          <Field label="Doing business as (DBA)" hint="Optional â€” used on financial statements">
             <Input placeholder="optional" />
           </Field>
           <Field label="Entity type" required>
@@ -144,7 +144,7 @@ function StepBasics({ form, setForm }) {
         <div className="grid grid-cols-3 gap-4">
           <Field label="Fiscal year start" hint="Most US small businesses: January 1">
             <select className="h-8 px-3 rounded-md border border-input bg-card text-[13.5px]">
-              <option>January 1</option><option>April 1</option><option>July 1</option><option>October 1</option><option>Custom…</option>
+              <option>January 1</option><option>April 1</option><option>July 1</option><option>October 1</option><option>Customâ€¦</option>
             </select>
           </Field>
           <Field label="Accounting basis">
@@ -154,7 +154,7 @@ function StepBasics({ form, setForm }) {
           </Field>
           <Field label="Currency">
             <select className="h-8 px-3 rounded-md border border-input bg-card text-[13.5px]">
-              <option>USD ($)</option><option>CAD ($)</option><option>GBP (£)</option><option>EUR (€)</option>
+              <option>USD ($)</option><option>CAD ($)</option><option>GBP (Â£)</option><option>EUR (â‚¬)</option>
             </select>
           </Field>
         </div>
@@ -172,7 +172,7 @@ function StepBooks({ form, setForm }) {
   ];
   return (
     <>
-      <Section title="How would you like to bring in their books?" sub="Choose one — you can connect additional sources later from Settings → Integrations.">
+      <Section title="How would you like to bring in their books?" sub="Choose one â€” you can connect additional sources later from Settings â†’ Integrations.">
         <div className="grid grid-cols-2 gap-3">
           {choices.map(c => (
             <ChoiceCard key={c.key}
@@ -184,7 +184,7 @@ function StepBooks({ form, setForm }) {
       </Section>
 
       {form.books === "qbo" && (
-        <Section title="QuickBooks Online connection" sub="We'll redirect to QBO to authorize. Read-only sync — we never write back unless you ask.">
+        <Section title="QuickBooks Online connection" sub="We'll redirect to QBO to authorize. Read-only sync â€” we never write back unless you ask.">
           <div className="border border-border rounded-lg p-5 bg-muted/40 flex items-center gap-4">
             <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#2CA01C] to-[#1F7717] grid place-items-center text-white font-bold text-[14px]">QB</div>
             <div className="flex-1">
@@ -210,7 +210,7 @@ function StepBooks({ form, setForm }) {
                   <span className="font-medium">{t.name}</span>
                   {t.badge && <Badge variant="accent" className="h-5 text-[10px] px-2">{t.badge}</Badge>}
                 </div>
-                <div className="text-[12px] text-muted-foreground">{t.accounts} accounts · 5 sections</div>
+                <div className="text-[12px] text-muted-foreground">{t.accounts} accounts Â· 5 sections</div>
               </div>
             ))}
           </div>
@@ -235,15 +235,15 @@ function StepFeeds() {
 
           <div className="space-y-2">
             {[
-              { name: "Chase Business Checking", mask: "•••• 5847", status: "queued" },
-              { name: "Chase Business Credit",   mask: "•••• 9921", status: "queued" },
-              { name: "Amex Platinum Business",  mask: "•••• 1124", status: "queued" },
+              { name: "Chase Business Checking", mask: "â€¢â€¢â€¢â€¢ 5847", status: "queued" },
+              { name: "Chase Business Credit",   mask: "â€¢â€¢â€¢â€¢ 9921", status: "queued" },
+              { name: "Amex Platinum Business",  mask: "â€¢â€¢â€¢â€¢ 1124", status: "queued" },
             ].map((a, i) => (
               <div key={i} className="flex items-center gap-3 px-3 h-12 border border-border rounded-md bg-muted/40">
                 <span className="w-2 h-2 rounded-full bg-warning" />
                 <div className="flex-1">
                   <div className="font-medium text-[13.5px]">{a.name}</div>
-                  <div className="text-[11.5px] text-text-soft font-mono">{a.mask} · awaiting owner auth</div>
+                  <div className="text-[11.5px] text-text-soft font-mono">{a.mask} Â· awaiting owner auth</div>
                 </div>
                 <Button size="sm" variant="ghost">{I.x}<span>Remove</span></Button>
               </div>
@@ -267,7 +267,7 @@ function StepFeeds() {
 
 function StepTeam({ form, setForm }) {
   const STAFF_OPTIONS = [
-    { initials: "JR", name: "Jordan Reyes",  role: "Senior bookkeeper", clients: 8, suggested: true },
+    { initials: "ST", name: "Scott Turner",  role: "Senior bookkeeper", clients: 8, suggested: true },
     { initials: "PS", name: "Priya Sharma",  role: "Senior bookkeeper", clients: 7 },
     { initials: "MT", name: "Marcus Tran",   role: "Bookkeeper",        clients: 9 },
     { initials: "LW", name: "Lou Whitaker",  role: "Bookkeeper",        clients: 4 },
@@ -300,7 +300,7 @@ function StepTeam({ form, setForm }) {
                     <span className="font-medium">{s.name}</span>
                     {s.suggested && <Badge variant="accent" className="h-5 text-[10px] px-2">Lead suggested</Badge>}
                   </div>
-                  <div className="text-[11.5px] text-text-soft">{s.role} · currently on {s.clients} clients</div>
+                  <div className="text-[11.5px] text-text-soft">{s.role} Â· currently on {s.clients} clients</div>
                 </div>
                 {picked && (
                   <select className="h-8 px-2 rounded-md border border-input bg-card text-[12px]" onClick={(e) => e.stopPropagation()}>
@@ -315,10 +315,10 @@ function StepTeam({ form, setForm }) {
 
       <Section title="Lead bookkeeper" sub="Approves work and owns the relationship. One person.">
         <div className="border border-border rounded-md p-3 bg-muted/40 flex items-center gap-3">
-          <AvatarRound size={28}>JR</AvatarRound>
+          <AvatarRound size={28}>ST</AvatarRound>
           <div className="flex-1">
-            <div className="text-[13.5px] font-medium">Jordan Reyes</div>
-            <div className="text-[11.5px] text-text-soft">Senior bookkeeper · 8 clients · 92% on-time close rate</div>
+            <div className="text-[13.5px] font-medium">Scott Turner</div>
+            <div className="text-[11.5px] text-text-soft">Senior bookkeeper Â· 8 clients Â· 92% on-time close rate</div>
           </div>
           <Button size="sm" variant="ghost">Change</Button>
         </div>
@@ -334,7 +334,7 @@ function StepReview({ form }) {
         <Card>
           <div className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
             <CardTitle>{form.name || "Atlas Coffee Roasters"}</CardTitle>
-            <Badge variant="accent">LLC · Food & Beverage</Badge>
+            <Badge variant="accent">LLC Â· Food & Beverage</Badge>
           </div>
           <div className="grid grid-cols-2 gap-x-8 gap-y-4 p-5 text-[13px]">
             <div>
@@ -350,11 +350,11 @@ function StepReview({ form }) {
             </div>
             <div>
               <div className="text-[11px] uppercase tracking-wider text-text-soft font-medium mb-1">Fiscal year</div>
-              <div className="font-medium font-mono">Jan 1 → Dec 31 · Accrual · USD</div>
+              <div className="font-medium font-mono">Jan 1 â†’ Dec 31 Â· Accrual Â· USD</div>
             </div>
             <div>
               <div className="text-[11px] uppercase tracking-wider text-text-soft font-medium mb-1">Team</div>
-              <div className="font-medium">{form.team.size || 1} staff assigned · Lead: Jordan R.</div>
+              <div className="font-medium">{form.team.size || 1} staff assigned Â· Lead: Scott T.</div>
             </div>
           </div>
         </Card>
@@ -367,18 +367,18 @@ function StepReview({ form }) {
               <Input placeholder="owner@atlascoffee.com" />
             </Field>
             <Field label="Owner full name" required>
-              <Input placeholder="e.g. Diego Marín" />
+              <Input placeholder="e.g. Diego MarÃ­n" />
             </Field>
             <Field label="Personal note (optional)" hint="Appears at the top of the invite email">
               <textarea
                 className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-card text-[13.5px] resize-y focus:outline-none focus:border-primary focus:ring-2 focus:ring-ring/30"
-                placeholder="Hi Diego — really excited to start working together on Atlas's books. Logging in here will let you connect your bank accounts so we can get rolling…"
+                placeholder="Hi Diego â€” really excited to start working together on Atlas's books. Logging in here will let you connect your bank accounts so we can get rollingâ€¦"
               />
             </Field>
             <div className="flex items-start gap-3 p-3 bg-accent rounded-md">
               <span className="w-4 h-4 text-primary mt-0.5">{I.zap}</span>
               <div className="flex-1 text-[12.5px] text-primary">
-                Accounting Completed will run automated checks on the first sync — duplicate detection, unbalanced JEs, and chart-of-accounts gaps. You'll get a summary in your inbox.
+                Accounting Completed will run automated checks on the first sync â€” duplicate detection, unbalanced JEs, and chart-of-accounts gaps. You'll get a summary in your inbox.
               </div>
             </div>
           </div>
@@ -394,7 +394,7 @@ function App() {
   const [form, setForm] = useState({
     name: "",
     books: "qbo",
-    team: new Set([0]), // Jordan default
+    team: new Set([0]), // Scott default
   });
 
   const StepBody = [StepBasics, StepBooks, StepFeeds, StepTeam, StepReview][step];
@@ -404,7 +404,7 @@ function App() {
       <div className="flex items-end justify-between gap-6 mb-6 flex-wrap">
         <div>
           <h1 className="text-[28px] leading-9 font-semibold tracking-tight m-0 mb-1">Add a new client</h1>
-          <p className="text-[15px] text-muted-foreground">Five steps · about 4 minutes · saves a draft as you go</p>
+          <p className="text-[15px] text-muted-foreground">Five steps Â· about 4 minutes Â· saves a draft as you go</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost">Save & exit</Button>
@@ -420,14 +420,14 @@ function App() {
 
         <div className="px-6 py-4 border-t border-border bg-muted/40 flex items-center justify-between">
           <Button variant="ghost" disabled={step === 0} onClick={() => setStep(Math.max(0, step - 1))}>
-            ← Back
+            â† Back
           </Button>
           <div className="flex items-center gap-3">
             <span className="text-[12px] text-text-soft">Step <span className="font-mono text-foreground">{step + 1}</span> of <span className="font-mono text-foreground">{STEPS.length}</span></span>
             <Button variant="ghost">Skip</Button>
             {step < STEPS.length - 1 ? (
               <Button variant="primary" onClick={() => setStep(step + 1)}>
-                Continue <span className="ml-1 opacity-70"><Kbd>↵</Kbd></span>
+                Continue <span className="ml-1 opacity-70"><Kbd>â†µ</Kbd></span>
               </Button>
             ) : (
               <Button variant="primary">{I.check}<span>Send invite & finish</span></Button>
@@ -437,7 +437,7 @@ function App() {
       </Card>
 
       <div className="text-center text-[12px] text-text-soft">
-        Need help? <a href="#" className="text-primary hover:underline">Watch the 2-min walkthrough →</a>
+        Need help? <a href="#" className="text-primary hover:underline">Watch the 2-min walkthrough â†’</a>
       </div>
     </PageShell>
   );

@@ -263,7 +263,31 @@ function TweaksPanel({ title = 'Tweaks', children }) {
     window.addEventListener('mouseup', up);
   };
 
-  if (!open) return null;
+  if (!open) return (
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
+      aria-label="Open tweaks"
+      title="View options"
+      style={{
+        position: 'fixed', right: 16, bottom: 16, zIndex: 9999,
+        width: 40, height: 40, borderRadius: 999,
+        background: 'hsl(var(--card))', color: 'hsl(var(--foreground))',
+        border: '1px solid hsl(var(--border))',
+        boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+        display: 'grid', placeItems: 'center', cursor: 'pointer',
+      }}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" strokeWidth="2"
+           strokeLinecap="round" strokeLinejoin="round">
+        <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+        <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+        <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/>
+        <line x1="17" y1="16" x2="23" y2="16"/>
+      </svg>
+    </button>
+  );
   return (
     <>
       <style>{__TWEAKS_STYLE}</style>
