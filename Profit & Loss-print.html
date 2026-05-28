@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Accounting Completed — Profit &amp; Loss (Print)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="tw-config.js"></script>
+<link rel="stylesheet" href="styles/theme.css" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+  /* ============================================================
+     Print-ready P&L. Hides the app chrome and reflows the report
+     onto landscape pages.
+     ============================================================ */
+  html, body { overflow: visible; height: auto; }
+  body { background: white !important; }
+
+  /* Hide chrome that doesn't belong on paper */
+  aside,                                /* Sidebar */
+  .topbar,                              /* Topbar (class) */
+  [role="dialog"],                      /* Picker dialog when not visible */
+  .tweaks-host,                         /* Tweaks panel host */
+  #__om_tweaks_host {
+    display: none !important;
+  }
+
+  /* The PageShell uses a 240px sidebar + 56px topbar grid. Reset it. */
+  body > #root > div { display: block !important; height: auto !important; }
+  body > #root > div > div:first-child { display: none !important; } /* sidebar wrapper */
+  body > #root > div > .topbar { display: none !important; }
+  body > #root > div > main {
+    overflow: visible !important;
+    height: auto !important;
+    padding: 24px 28px !important;
+  }
+
+  /* Print header */
+  .print-header {
+    display: none;
+    border-bottom: 2px solid hsl(var(--primary));
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+  }
+
+  /* Hide the in-page toolbar (Tabs / period buttons / Refresh / Export / Share),
+     KPI sparklines, and the legend in the card footer — keep the numbers themselves. */
+  .toolbar-noprint,
+  main > div:first-of-type > div:nth-of-type(2),  /* page-head toolbar column */
+  .kpi-spark { display: none !important; }
+
+  /* Make the P&L card span full width with no rounded corners */
+  .pl-print {
+    border: 1px solid hsl(var(--border-strong)) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  .pl-print .pl-table { font-size: 9px; }
+  .pl-print .pl-table th, .pl-print .pl-table td {
+    height: 22px !important;
+    padding: 0 6px !important;
+  }
+  .pl-print .pl-table thead th { position: static !important; }
+  .pl-print .pl-table th.account-h,
+  .pl-print .pl-table td.account-c {
+    position: static !important;
+    box-shadow: none !important;
+    min-width: 160px !important;
+  }
+
+  /* P&L table — sticky-first-column + dense rows (carried over from app) */
+  .pl-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; }
+  .pl-table th, .pl-table td {
+    padding: 0 10px;
+    height: var(--row-h, 30px);
+    text-align: right;
+    white-space: nowrap;
+    border-bottom: 1px solid hsl(var(--border) / 0.6);
+    background: hsl(var(--card));
+  }
+  .pl-table thead th {
+    height: 28px;
+    background: hsl(var(--muted));
+    border-bottom: 1px solid hsl(var(--border));
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+    color: hsl(var(--text-soft));
+  }
+  .pl-table th.month-h.is-current { background: hsl(var(--accent)); color: hsl(var(--primary)); }
+  .pl-table th.account-h, .pl-table td.account-c {
+    text-align: left; min-width: 200px;
+  }
+  .pl-table tr.section td {
+    background: hsl(var(--muted)); height: 22px;
+    text-align: left; font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    color: hsl(var(--text-soft)); font-weight: 500;
+    border-top: 1px solid hsl(var(--border));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  .pl-table tr.account-row td.account-c { color: hsl(var(--foreground)); padding-left: 16px; }
+  .pl-table tr.subtotal td {
+    font-weight: 600; background: hsl(var(--muted));
+    border-top: 1px solid hsl(var(--border-strong));
+    border-bottom: 1px solid hsl(var(--border-strong));
+  }
+  .pl-table tr.gross td {
+    background: hsl(var(--accent)); color: hsl(var(--primary)); font-weight: 600;
+    border-top: 1px solid hsl(var(--primary) / 0.25);
+    border-bottom: 1px solid hsl(var(--primary) / 0.25);
+  }
+  .pl-table tr.total td {
+    font-weight: 600;
+    border-top: 1px solid hsl(var(--border-strong));
+    border-bottom: 3px double hsl(var(--border-strong));
+    background: hsl(var(--card));
+  }
+  .pl-table tr.total td.ytd { color: hsl(var(--primary)); }
+  .pl-table td.num {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums; font-feature-settings: "zero","tnum";
+    letter-spacing: 0.01em;
+  }
+  .pl-table td.num.zero  { color: hsl(var(--text-soft)); }
+  .pl-table td.num.neg   { color: hsl(var(--destructive)); }
+  .pl-table td.num.future{ color: hsl(var(--text-soft)); background: hsl(var(--muted)); }
+  .pl-table td.num.ytd   { background: hsl(var(--muted)); font-weight: 600; }
+  .pl-table th.ytd-h     { background: hsl(var(--secondary)); color: hsl(var(--foreground)); border-left: 1px solid hsl(var(--border)); }
+  .pl-table td.ytd       { border-left: 1px solid hsl(var(--border) / 0.6); }
+  .pl-table th.pct-h, .pl-table td.pct {
+    width: 52px; color: hsl(var(--text-soft));
+    border-left: 1px solid hsl(var(--border) / 0.6);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- @media print ---------- */
+  @media print {
+    @page { size: 14in 8.5in; margin: 0.4in 0.4in 0.5in 0.4in; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    html, body { background: white !important; }
+
+    .print-header { display: flex !important; align-items: center; justify-content: space-between; }
+    .toolbar-noprint, .kpi-spark { display: none !important; }
+
+    /* Each major card on its own page (P&L is on page 1 with header + KPIs) */
+    .pl-print { break-inside: avoid; }
+    .pl-table thead { display: table-header-group; } /* repeat headers across pages */
+    .pl-table tr.subtotal, .pl-table tr.gross, .pl-table tr.total { break-inside: avoid; }
+
+    /* Hide grain that doesn't matter on paper */
+    button { display: none !important; }
+    .pl-table tr.account-row:hover td { background: hsl(var(--card)) !important; }
+  }
+</style>
+</head>
+<body class="bg-background text-foreground" data-density="comfy">
+  <div id="root" class="w-full"></div>
+
+  <script type="application/json" id="data-pl">
+  {
+    "client": "Atlas Coffee Roasters",
+    "currentMonth": 5,
+    "sections": [
+      {
+        "id": "income",
+        "label": "Income",
+        "accounts": [
+          { "code": "4010", "name": "Wholesale roasted coffee", "vals": [184200, 196480, 211340, 198750, 224180, 0,0,0,0,0,0,0] },
+          { "code": "4020", "name": "Retail café sales",         "vals": [142560, 138210, 156870, 161220, 168340, 0,0,0,0,0,0,0] },
+          { "code": "4030", "name": "Subscription box revenue",  "vals": [ 48100,  49260,  51380,  53420,  55980, 0,0,0,0,0,0,0] },
+          { "code": "4040", "name": "Merchandise & retail goods","vals": [ 12480,  10920,  14210,  13680,  16450, 0,0,0,0,0,0,0] },
+          { "code": "4090", "name": "Other operating income",    "vals": [   850,   1200,    640,    980,   1420, 0,0,0,0,0,0,0] }
+        ]
+      },
+      {
+        "id": "cogs",
+        "label": "Cost of Goods Sold",
+        "accounts": [
+          { "code": "5010", "name": "Green coffee purchases",   "vals": [ 86420,  91240,  98760,  92810, 105420, 0,0,0,0,0,0,0] },
+          { "code": "5020", "name": "Roasting labor",           "vals": [ 24800,  24800,  26100,  26100,  26100, 0,0,0,0,0,0,0] },
+          { "code": "5030", "name": "Packaging & supplies",     "vals": [ 11240,  10820,  12480,  11960,  13680, 0,0,0,0,0,0,0] },
+          { "code": "5040", "name": "Freight in",               "vals": [  6420,   5980,   7140,   6850,   8210, 0,0,0,0,0,0,0] }
+        ]
+      },
+      {
+        "id": "opex",
+        "label": "Operating Expenses",
+        "accounts": [
+          { "code": "6010", "name": "Salaries & wages",         "vals": [ 78400,  78400,  82100,  82100,  82100, 0,0,0,0,0,0,0] },
+          { "code": "6020", "name": "Payroll taxes & benefits", "vals": [ 18420,  18420,  19320,  19320,  19320, 0,0,0,0,0,0,0] },
+          { "code": "6030", "name": "Rent & occupancy",         "vals": [ 14800,  14800,  14800,  14800,  14800, 0,0,0,0,0,0,0] },
+          { "code": "6040", "name": "Utilities",                "vals": [  2840,   2620,   2480,   2310,   2680, 0,0,0,0,0,0,0] },
+          { "code": "6050", "name": "Marketing & advertising",  "vals": [  8200,   6400,  11280,   9100,  14620, 0,0,0,0,0,0,0] },
+          { "code": "6060", "name": "Software & subscriptions", "vals": [  3240,   3240,   3520,   3520,   3680, 0,0,0,0,0,0,0] },
+          { "code": "6070", "name": "Insurance",                "vals": [  2480,   2480,   2480,   2480,   2480, 0,0,0,0,0,0,0] },
+          { "code": "6080", "name": "Travel & entertainment",   "vals": [  1240,    820,   2640,   1980,   3420, 0,0,0,0,0,0,0] },
+          { "code": "6090", "name": "Professional fees",        "vals": [  4500,   2800,   3200,   2600,   3100, 0,0,0,0,0,0,0] },
+          { "code": "6100", "name": "Office & general",         "vals": [  1820,   1640,   2010,   1840,   2210, 0,0,0,0,0,0,0] }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- ============================================================
+       Print-only Income Statement (self-contained — does NOT use
+       PageShell so the app chrome is never even mounted).
+       ============================================================ -->
+  <script type="text/babel">
+    const { useMemo } = React;
+    const MONTHS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+    const fmt = (n) => {
+      if (n === 0) return "—";
+      const abs = Math.abs(n);
+      const s = abs.toLocaleString("en-US", { maximumFractionDigits: 0 });
+      return n < 0 ? `(${s})` : s;
+    };
+    const fmtPct = (n) => (n === null || isNaN(n)) ? "—" : `${(n * 100).toFixed(1)}%`;
+
+    function PrintReport() {
+      const data = JSON.parse(document.getElementById("data-pl").textContent);
+      const current = data.currentMonth;
+
+      const computed = useMemo(() => data.sections.map((sec) => {
+        const totals = new Array(12).fill(0);
+        sec.accounts.forEach(a => a.vals.forEach((v, i) => totals[i] += v));
+        const ytd = totals.reduce((s, v) => s + v, 0);
+        const accountYtds = sec.accounts.map(a => a.vals.reduce((s,v)=>s+v,0));
+        return { ...sec, totals, ytd, accountYtds };
+      }), [data]);
+
+      const income = computed.find(s => s.id === "income");
+      const cogs   = computed.find(s => s.id === "cogs");
+      const opex   = computed.find(s => s.id === "opex");
+      const grossByMonth = income.totals.map((v, i) => v - cogs.totals[i]);
+      const netByMonth   = grossByMonth.map((v, i) => v - opex.totals[i]);
+      const grossYtd = grossByMonth.reduce((s,v)=>s+v,0);
+      const netYtd   = netByMonth.reduce((s,v)=>s+v,0);
+      const incomeYtd = income.ytd;
+      const pctOf = (n, base) => base ? n / base : 0;
+
+      const numCell = (val, opts = {}, key) => {
+        const { future, ytd: isYtd } = opts;
+        const cls = ["num"];
+        if (future) cls.push("future");
+        if (val === 0) cls.push("zero");
+        if (val < 0) cls.push("neg");
+        if (isYtd) cls.push("ytd");
+        return <td key={key} className={cls.join(" ")}>{fmt(val)}</td>;
+      };
+
+      const accountRows = (sec) => sec.accounts.map((a, idx) => {
+        const ytd = sec.accountYtds[idx];
+        return (
+          <tr key={a.code} className="account-row">
+            <td className="account-c">
+              <span style={{color: "hsl(var(--text-soft))", fontFamily: "IBM Plex Mono", fontSize: 9, marginRight: 8}}>{a.code}</span>
+              {a.name}
+            </td>
+            {a.vals.map((v, i) => numCell(v, { future: i + 1 > current }, `m${i}`))}
+            {numCell(ytd, { ytd: true }, "ytd")}
+            <td className="pct">{fmtPct(pctOf(ytd, incomeYtd))}</td>
+          </tr>
+        );
+      });
+
+      return (
+        <div style={{ padding: "24px 28px", maxWidth: "100%" }}>
+          {/* Print header */}
+          <header className="print-header" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", borderBottom: "2px solid hsl(var(--primary))", paddingBottom: 12, marginBottom: 16 }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <span style={{ width: 22, height: 22, borderRadius: 4, background: "hsl(var(--primary))", color: "white", display: "grid", placeItems: "center", fontFamily: "IBM Plex Mono", fontSize: 9, fontWeight: 600, letterSpacing: "-0.02em" }}>AC</span>
+                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "hsl(var(--text-soft))" }}>Accounting Completed</span>
+              </div>
+              <h1 style={{ fontSize: 22, lineHeight: "26px", fontWeight: 600, letterSpacing: "-0.01em", margin: 0, marginBottom: 2 }}>
+                Income statement trend analysis
+              </h1>
+              <div style={{ fontSize: 11.5, color: "hsl(var(--muted-foreground))" }}>
+                Atlas Coffee Roasters · <span style={{ fontFamily: "IBM Plex Mono", color: "hsl(var(--foreground))", fontWeight: 500 }}>Jan 1, 2026 → Dec 31, 2026</span> · as of May 28, 2026 · accrual basis · USD
+              </div>
+            </div>
+            <div style={{ textAlign: "right", fontSize: 10, color: "hsl(var(--text-soft))", lineHeight: 1.4 }}>
+              <div>Prepared by <span style={{ color: "hsl(var(--foreground))", fontWeight: 500 }}>Jordan Reyes</span></div>
+              <div>Synced from <span style={{ fontFamily: "IBM Plex Mono", color: "hsl(var(--foreground))" }}>QBO</span> · 19 accounts</div>
+              <div style={{ marginTop: 4 }}>Printed <span style={{ fontFamily: "IBM Plex Mono" }}>2026-05-28</span></div>
+            </div>
+          </header>
+
+          {/* The table */}
+          <div className="pl-print" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border-strong))" }}>
+            <table className="pl-table">
+              <thead>
+                <tr>
+                  <th className="account-h">Account</th>
+                  {MONTHS.map((m, i) => (
+                    <th key={m} className={"month-h" + (i + 1 === current ? " is-current" : "")} style={{ minWidth: 56 }}>
+                      {m} <span style={{ opacity: 0.6 }}>26</span>
+                    </th>
+                  ))}
+                  <th className="ytd-h" style={{ minWidth: 70 }}>YTD</th>
+                  <th className="pct-h">% Inc.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="section"><td className="account-c">Income</td>{Array.from({length:14}).map((_,i)=><td key={i}></td>)}</tr>
+                {accountRows(income)}
+                <tr className="subtotal">
+                  <td className="account-c">Total income</td>
+                  {income.totals.map((v, i) => numCell(v, { future: i + 1 > current }, `m${i}`))}
+                  {numCell(income.ytd, { ytd: true }, "ytd")}
+                  <td className="pct">100.0%</td>
+                </tr>
+
+                <tr className="section"><td className="account-c">Cost of goods sold</td>{Array.from({length:14}).map((_,i)=><td key={i}></td>)}</tr>
+                {accountRows(cogs)}
+                <tr className="subtotal">
+                  <td className="account-c">Total COGS</td>
+                  {cogs.totals.map((v, i) => numCell(v, { future: i + 1 > current }, `m${i}`))}
+                  {numCell(cogs.ytd, { ytd: true }, "ytd")}
+                  <td className="pct">{fmtPct(pctOf(cogs.ytd, incomeYtd))}</td>
+                </tr>
+
+                <tr className="gross">
+                  <td className="account-c">Gross profit</td>
+                  {grossByMonth.map((v, i) => {
+                    const cls = ["num"];
+                    if (i + 1 > current) cls.push("future");
+                    if (v < 0) cls.push("neg");
+                    return <td key={i} className={cls.join(" ")}>{fmt(v)}</td>;
+                  })}
+                  <td className="num ytd">{fmt(grossYtd)}</td>
+                  <td className="pct">{fmtPct(pctOf(grossYtd, incomeYtd))}</td>
+                </tr>
+
+                <tr className="section"><td className="account-c">Operating expenses</td>{Array.from({length:14}).map((_,i)=><td key={i}></td>)}</tr>
+                {accountRows(opex)}
+                <tr className="subtotal">
+                  <td className="account-c">Total operating expenses</td>
+                  {opex.totals.map((v, i) => numCell(v, { future: i + 1 > current }, `m${i}`))}
+                  {numCell(opex.ytd, { ytd: true }, "ytd")}
+                  <td className="pct">{fmtPct(pctOf(opex.ytd, incomeYtd))}</td>
+                </tr>
+
+                <tr className="total">
+                  <td className="account-c">Net income</td>
+                  {netByMonth.map((v, i) => {
+                    const cls = ["num"];
+                    if (i + 1 > current) cls.push("future");
+                    if (v < 0) cls.push("neg");
+                    return <td key={i} className={cls.join(" ")}>{fmt(v)}</td>;
+                  })}
+                  <td className="num ytd">{fmt(netYtd)}</td>
+                  <td className="pct">{fmtPct(pctOf(netYtd, incomeYtd))}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer note */}
+          <div style={{ marginTop: 16, paddingTop: 10, borderTop: "1px solid hsl(var(--border))", display: "flex", justifyContent: "space-between", fontSize: 9.5, color: "hsl(var(--text-soft))" }}>
+            <div>
+              <span style={{ fontFamily: "IBM Plex Mono", color: "hsl(var(--destructive))" }}>(xxx)</span> = negative value &nbsp;·&nbsp;
+              <span style={{ fontFamily: "IBM Plex Mono" }}>—</span> = no activity &nbsp;·&nbsp;
+              <span style={{ background: "hsl(var(--muted))", padding: "0 4px" }}>shaded</span> = projected / future period
+            </div>
+            <div style={{ fontFamily: "IBM Plex Mono" }}>Accounting Completed · confidential</div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<PrintReport />);
+
+    /* Auto-print once fonts have loaded and React has painted. */
+    (async () => {
+      try { await document.fonts.ready; } catch (e) {}
+      // Babel needs an extra tick to mount; plus a small safety buffer.
+      await new Promise(r => setTimeout(r, 700));
+      window.print();
+    })();
+  </script>
+</body>
+</html>

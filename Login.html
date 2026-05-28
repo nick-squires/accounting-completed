@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Accounting Completed — Sign in</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="tw-config.js"></script>
+<link rel="stylesheet" href="styles/theme.css" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+  body { overflow: hidden; }
+  .mac-bg-pattern {
+    background-image:
+      radial-gradient(circle at 20% 30%, hsl(202 85% 30% / 0.18), transparent 40%),
+      radial-gradient(circle at 80% 80%, hsl(184 81% 29% / 0.16), transparent 40%);
+  }
+  .mac-bg-grid {
+    background-size: 28px 28px;
+    background-image:
+      linear-gradient(to right, hsl(0 0% 100% / 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(0 0% 100% / 0.04) 1px, transparent 1px);
+  }
+</style>
+</head>
+<body class="h-screen w-screen bg-background text-foreground">
+  <div id="root" class="h-full w-full"></div>
+
+  <script type="text/babel" src="ui.jsx"></script>
+  <script type="text/babel">
+    /* global Button, Input, Kbd, Card */
+    const { useState } = React;
+
+    function Login() {
+      const [email, setEmail] = useState("jordan@acmebooks.co");
+      const [pw, setPw]       = useState("");
+      const [remember, setRemember] = useState(true);
+
+      return (
+        <div className="grid grid-cols-2 h-full">
+          {/* Brand panel */}
+          <div className="relative bg-[hsl(217_43%_10%)] text-white overflow-hidden flex flex-col mac-bg-pattern">
+            <div className="absolute inset-0 mac-bg-grid pointer-events-none" />
+
+            {/* Top: brand */}
+            <div className="relative p-10 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-md bg-white text-primary grid place-items-center font-mono font-semibold text-[12px]">AC</div>
+              <div>
+                <div className="font-semibold text-[18px] tracking-tight">Accounting Completed</div>
+                <div className="text-[11px] text-white/60 uppercase tracking-wider">Cloud Accounting</div>
+              </div>
+            </div>
+
+            {/* Mid: pitch */}
+            <div className="relative px-10 pt-12 pb-10 flex-1 flex flex-col justify-center max-w-[560px]">
+              <span className="inline-flex items-center gap-2 mb-5 px-2.5 py-1 rounded-full bg-white/10 text-white/90 text-[11px] font-medium uppercase tracking-wider w-fit">
+                <span className="w-1.5 h-1.5 rounded-full bg-[hsl(151_76%_55%)]" />
+                v6.2 · released May 24
+              </span>
+              <h1 className="text-[40px] leading-[1.1] font-semibold tracking-tight m-0 mb-6" style={{ textWrap: "balance" }}>
+                Bookkeeping that gets out of the way of the books.
+              </h1>
+              <p className="text-[16px] text-white/70 mb-12 max-w-[48ch]" style={{ textWrap: "pretty" }}>
+                Cloud accounting for firms managing many clients — bank feeds, reports, and reconciliation, all in one place.
+              </p>
+
+              {/* Mini feature pills */}
+              <div className="grid grid-cols-2 gap-3 max-w-[480px]">
+                {[
+                  { k: "Bank feeds",     v: "14,000+ institutions" },
+                  { k: "Auto-categorize",v: "98% accuracy" },
+                  { k: "Multi-client",   v: "Built for firms" },
+                  { k: "Audit trail",    v: "Every change tracked" },
+                ].map(f => (
+                  <div key={f.k} className="border border-white/10 bg-white/[0.03] rounded-md px-3 py-2.5">
+                    <div className="text-[11px] text-white/50 uppercase tracking-wider">{f.k}</div>
+                    <div className="text-[13px] font-medium mt-0.5">{f.v}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom: testimonial */}
+            <div className="relative p-10 border-t border-white/10">
+              <p className="text-[13px] leading-relaxed text-white/85 italic max-w-[60ch]" style={{ textWrap: "pretty" }}>
+                "We migrated 28 clients in a weekend. The categorization rules learned our chart of accounts faster than any junior we've ever onboarded."
+              </p>
+              <div className="flex items-center gap-3 mt-4">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[hsl(213_25%_60%)] to-[hsl(213_18%_42%)] grid place-items-center text-white font-semibold text-[12px]">AC</div>
+                <div>
+                  <div className="text-[13px] font-medium">Adelina Costa</div>
+                  <div className="text-[11px] text-white/60">Founder, Acme Bookkeeping Co.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Form panel */}
+          <div className="flex items-center justify-center p-10 overflow-y-auto">
+            <div className="w-full max-w-[400px]">
+              <div className="mb-8">
+                <div className="text-[11px] text-text-soft uppercase tracking-wider font-medium mb-2">Sign in</div>
+                <h2 className="text-[26px] leading-7 font-semibold tracking-tight m-0">Welcome back.</h2>
+                <p className="text-[14px] text-muted-foreground mt-2">
+                  Don't have an account?{" "}
+                  <a href="#" className="text-primary font-medium hover:underline">Ask your firm admin →</a>
+                </p>
+              </div>
+
+              {/* SSO row */}
+              <div className="flex flex-col gap-2 mb-6">
+                <button className="w-full h-10 rounded-md border border-border bg-card hover:bg-secondary hover:border-border-strong transition-colors flex items-center justify-center gap-3 text-[13.5px] font-medium whitespace-nowrap">
+                  <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09Z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A10.99 10.99 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.84 14.1A6.59 6.59 0 0 1 5.48 12c0-.73.13-1.44.36-2.1V7.07H2.18A11 11 0 0 0 1 12c0 1.78.43 3.47 1.18 4.95l3.66-2.85Z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.07L5.84 9.9C6.71 7.31 9.14 5.38 12 5.38Z"/></svg>
+                  Continue with Google
+                </button>
+                <button className="w-full h-10 rounded-md border border-border bg-card hover:bg-secondary hover:border-border-strong transition-colors flex items-center justify-center gap-3 text-[13.5px] font-medium whitespace-nowrap">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#0F1724"><path d="M22 13.4V21h-3v-7c0-1.32-.6-2-1.83-2-1 0-1.6.66-1.85 1.3-.1.23-.13.55-.13.87V21h-3s.04-12 0-13.2h3v1.87C15.6 8.74 16.5 8 18 8c2.2 0 4 1.43 4 5.4ZM6.5 4a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 0 0 0-3.5ZM5 21h3V7.8H5V21Z"/></svg>
+                  Continue with LinkedIn SSO
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-[11px] uppercase tracking-wider text-text-soft">or with email</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+
+              {/* Email + password */}
+              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                <div>
+                  <label className="block text-[12px] font-medium text-muted-foreground mb-1.5">Email</label>
+                  <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@firm.com" className="h-10" />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[12px] font-medium text-muted-foreground">Password</label>
+                    <a href="#" className="text-[12px] text-primary hover:underline">Forgot?</a>
+                  </div>
+                  <Input value={pw} onChange={(e) => setPw(e.target.value)} type="password" placeholder="••••••••••••" className="h-10 font-mono" />
+                </div>
+
+                <label className="flex items-center gap-2 text-[12.5px] text-muted-foreground cursor-pointer select-none">
+                  <input type="checkbox" checked={remember} onChange={() => setRemember(!remember)}
+                         className="w-3.5 h-3.5 rounded-sm accent-primary cursor-pointer" />
+                  Keep me signed in on this browser
+                </label>
+
+                <a href="Dashboard.html" className="w-full h-10 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-[14px] font-semibold mt-2 whitespace-nowrap">
+                  Sign in to Accounting Completed
+                  <span className="text-[11px] opacity-70"><Kbd>↵</Kbd></span>
+                </a>
+              </form>
+
+              <div className="mt-8 pt-6 border-t border-border text-center text-[11.5px] text-text-soft">
+                Protected by SOC 2 Type II controls.{" "}
+                <a href="#" className="text-primary hover:underline">Security overview →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<Login />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+/* ============================================================
+   MAC theme — shadcn-style HSL CSS variables
+   Hooked to Tailwind via `tw-config.js` (`hsl(var(--token))`).
+   ============================================================ */
+
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
+
+:root {
+  /* Surfaces ---------------------------------------------------- */
+  --background:        214 20% 97%;
+  --foreground:        217 43% 10%;
+
+  --card:              0 0% 100%;
+  --card-foreground:   217 43% 10%;
+
+  --popover:           0 0% 100%;
+  --popover-foreground:217 43% 10%;
+
+  /* Primary (deep teal-blue, MAC heritage evolved) ------------- */
+  --primary:           202 85% 30%;
+  --primary-foreground:0 0% 100%;
+
+  /* Secondary = subtle interactive gray ----------------------- */
+  --secondary:           213 18% 95%;
+  --secondary-foreground:217 43% 10%;
+
+  /* Muted = inset surface / labels --------------------------- */
+  --muted:             216 17% 98%;
+  --muted-foreground:  215 15% 42%;
+
+  /* Accent = tinted primary surface -------------------------- */
+  --accent:            207 67% 93%;
+  --accent-foreground: 202 85% 30%;
+
+  /* Destructive / negative ----------------------------------- */
+  --destructive:           9 69% 42%;
+  --destructive-foreground:0 0% 100%;
+
+  /* Borders & focus rings ------------------------------------ */
+  --border:  220 15% 91%;
+  --input:   220 15% 91%;
+  --ring:    202 85% 30%;
+
+  /* Semantic (MAC custom) ------------------------------------ */
+  --positive:        151 76% 27%;
+  --positive-soft:   148 50% 92%;
+  --warning:         35 93% 36%;
+  --warning-soft:    40 90% 92%;
+  --info:            216 74% 43%;
+  --info-soft:       216 70% 94%;
+
+  /* Sidebar surfaces ----------------------------------------- */
+  --sidebar:           0 0% 100%;
+  --sidebar-foreground:217 43% 10%;
+  --sidebar-border:    220 15% 91%;
+
+  /* Text auxiliary ------------------------------------------ */
+  --text-soft:         215 12% 59%;
+  --border-strong:     217 13% 84%;
+
+  /* Sizing --------------------------------------------------- */
+  --radius: 0.5rem;
+}
+
+/* Base ----------------------------------------------------- */
+*, *::before, *::after { border-color: hsl(var(--border)); }
+
+html, body {
+  margin: 0;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 13.5px;
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01", "cv11";
+}
+
+::selection { background: hsl(var(--accent)); color: hsl(var(--primary)); }
+
+/* Scrollbars ------------------------------------------------ */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border-strong));
+  border-radius: 999px;
+  border: 2px solid hsl(var(--background));
+}
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--text-soft)); }
+
+/* Number rendering helpers --------------------------------- */
+.font-mono, .mono {
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-feature-settings: "zero", "tnum";
+}
+.tnum { font-variant-numeric: tabular-nums; }
