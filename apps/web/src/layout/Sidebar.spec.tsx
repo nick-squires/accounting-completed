@@ -40,6 +40,22 @@ describe("Sidebar", () => {
     expect(screen.getByText("Scott Turner")).toBeTruthy();
   });
 
+  it("renders user avatar initials (not '?') in the sidebar footer", () => {
+    renderSidebar();
+    // ROLES.staff.user.initials = "ST" — AvatarRound must render children, not fall back to "?"
+    const stNodes = screen.getAllByText("ST");
+    const avatarFallback = stNodes.find(
+      (el) => el.tagName.toLowerCase() === "span" && el.className.includes("rounded-full")
+    );
+    expect(avatarFallback).toBeTruthy();
+    // The footer user avatar must NOT show the generic fallback "?"
+    const questionNodes = screen.queryAllByText("?");
+    const userAvatarQuestion = questionNodes.find(
+      (el) => el.tagName.toLowerCase() === "span" && el.className.includes("rounded-full")
+    );
+    expect(userAvatarQuestion).toBeUndefined();
+  });
+
   it("renders client switcher for staff role (canSwitchClient=true)", () => {
     renderSidebar();
     // AppProviders defaults clientId to CLIENTS[0].id ("atlas")

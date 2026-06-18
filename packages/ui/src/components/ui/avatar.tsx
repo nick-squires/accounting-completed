@@ -74,10 +74,11 @@ function Avatar({ name, src, size = 32, className, children }: AvatarProps) {
 }
 
 // Round AvatarRound wrapper with gradient (from ui.jsx)
-function AvatarRound({ name, src, size = 28, className }: AvatarProps) {
-  const initials = name
+function AvatarRound({ name, src, size = 28, className, children }: AvatarProps) {
+  const derivedInitials = name
     ? name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : "?";
+  const fallbackContent = children ?? derivedInitials;
   return (
     <AvatarRoot
       className={cn("rounded-full bg-gradient-to-br from-[hsl(213_25%_88%)] to-[hsl(213_18%_72%)] text-foreground", className)}
@@ -85,7 +86,7 @@ function AvatarRound({ name, src, size = 28, className }: AvatarProps) {
     >
       {src && <AvatarImage src={src} alt={name} />}
       <AvatarFallback className="bg-transparent text-foreground text-xs font-semibold rounded-full">
-        {initials}
+        {fallbackContent}
       </AvatarFallback>
     </AvatarRoot>
   );
