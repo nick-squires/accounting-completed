@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppLayout } from "./layout/AppLayout";
 import { StubPage } from "./routes/_stub/StubPage";
 import { LoginPage } from "./routes/login/LoginPage";
+import { DashboardPage } from "./routes/dashboard/DashboardPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/login" replace /> },
@@ -9,8 +10,7 @@ export const router = createBrowserRouter([
   {
     element: <AppLayout />,
     children: [
-      // TODO(Task 10): replace with real DashboardPage
-      { path: "/dashboard", element: <StubPage />, handle: { title: "Dashboard", crumbs: ["Dashboard"] } },
+      { path: "/dashboard", element: <DashboardPage />, handle: { title: "Dashboard", crumbs: ["Dashboard"] } },
       { path: "/transactions", element: <StubPage />, handle: { title: "Transactions", crumbs: ["Transactions"] } },
       { path: "/bank-feeds", element: <StubPage />, handle: { title: "Bank feeds", crumbs: ["Bank feeds"] } },
       { path: "/reports/profit-loss", element: <StubPage />, handle: { title: "Profit & Loss", crumbs: ["Reports", "Profit & Loss"] } },
