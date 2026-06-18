@@ -21,7 +21,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="grid grid-cols-2 h-screen w-screen overflow-hidden bg-background text-foreground">
+    <div className="grid grid-cols-2 h-screen w-full overflow-hidden bg-background text-foreground">
       {/* ── Brand panel ── */}
       <div
         className="relative text-white overflow-hidden flex flex-col"
@@ -130,10 +130,11 @@ export function LoginPage() {
 
           <form className="space-y-4" onSubmit={handleSignIn}>
             <div>
-              <label className="block text-[12px] font-medium text-muted-foreground mb-1.5">
+              <label htmlFor="email" className="block text-[12px] font-medium text-muted-foreground mb-1.5">
                 Email
               </label>
               <Input
+                id="email"
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -144,7 +145,7 @@ export function LoginPage() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-[12px] font-medium text-muted-foreground">
+                <label htmlFor="password" className="block text-[12px] font-medium text-muted-foreground">
                   Password
                 </label>
                 <a href="#" className="text-[12px] text-primary hover:underline">
@@ -152,6 +153,7 @@ export function LoginPage() {
                 </a>
               </div>
               <Input
+                id="password"
                 type="password"
                 value={pw}
                 onChange={e => setPw(e.target.value)}
