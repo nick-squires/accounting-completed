@@ -1,0 +1,34 @@
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import { AppLayout } from "./layout/AppLayout";
+import { StubPage } from "./routes/_stub/StubPage";
+
+export const router = createBrowserRouter([
+  { path: "/", element: <Navigate to="/login" replace /> },
+  // TODO(Task 9): replace with real LoginPage
+  { path: "/login", element: <StubPage />, handle: { title: "Login", crumbs: [] } },
+  {
+    element: <AppLayout />,
+    children: [
+      // TODO(Task 10): replace with real DashboardPage
+      { path: "/dashboard", element: <StubPage />, handle: { title: "Dashboard", crumbs: ["Dashboard"] } },
+      { path: "/transactions", element: <StubPage />, handle: { title: "Transactions", crumbs: ["Transactions"] } },
+      { path: "/bank-feeds", element: <StubPage />, handle: { title: "Bank feeds", crumbs: ["Bank feeds"] } },
+      { path: "/reports/profit-loss", element: <StubPage />, handle: { title: "Profit & Loss", crumbs: ["Reports", "Profit & Loss"] } },
+      { path: "/reports/profit-loss/print", element: <StubPage />, handle: { title: "Profit & Loss (print)", crumbs: ["Reports", "Profit & Loss", "Print"] } },
+      { path: "/reports/balance-sheet", element: <StubPage />, handle: { title: "Balance Sheet", crumbs: ["Reports", "Balance Sheet"] } },
+      { path: "/reports/general-ledger", element: <StubPage />, handle: { title: "General Ledger", crumbs: ["Reports", "General Ledger"] } },
+      { path: "/reports/general-journal", element: <StubPage />, handle: { title: "General Journal", crumbs: ["Reports", "General Journal"] } },
+      { path: "/reports/approve", element: <StubPage />, handle: { title: "Approve reports", crumbs: ["Reports", "Approve"] } },
+      { path: "/setup/chart-of-accounts", element: <StubPage />, handle: { title: "Chart of accounts", crumbs: ["Setup", "Chart of accounts"] } },
+      { path: "/setup/categories", element: <StubPage />, handle: { title: "Categories", crumbs: ["Setup", "Categories"] } },
+      { path: "/setup/clients", element: <StubPage />, handle: { title: "Clients", crumbs: ["Setup", "Clients"] } },
+      { path: "/setup/clients/new", element: <StubPage />, handle: { title: "Add client", crumbs: ["Setup", "Clients", "Add"] } },
+      { path: "/setup/staff", element: <StubPage />, handle: { title: "Staff & roles", crumbs: ["Setup", "Staff & roles"] } },
+      { path: "/settings", element: <StubPage />, handle: { title: "Settings", crumbs: ["Settings"] } },
+      { path: "/plans", element: <StubPage />, handle: { title: "Plans & billing", crumbs: ["Plans & billing"] } },
+      { path: "/system-health", element: <StubPage />, handle: { title: "System health", crumbs: ["System health"] } },
+      { path: "/clients/switch", element: <StubPage />, handle: { title: "Switch client", crumbs: ["Clients", "Switch"] } },
+      { path: "/design-system", element: <StubPage />, handle: { title: "Design system", crumbs: ["Design system"] } },
+    ],
+  },
+]);
