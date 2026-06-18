@@ -42,6 +42,9 @@ describe("Sidebar", () => {
 
   it("renders client switcher for staff role (canSwitchClient=true)", () => {
     renderSidebar();
+    // AppProviders defaults clientId to CLIENTS[0].id ("atlas")
+    // Sidebar now reads from context, so we see context-derived name and sub
     expect(screen.getByText("Atlas Coffee Roasters")).toBeTruthy();
+    expect(screen.getByText("LLC · Food & Beverage")).toBeTruthy();
   });
 });

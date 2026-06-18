@@ -1,24 +1,19 @@
 import { NavLink } from "react-router-dom";
-import { navForRole, ROLES } from "@accounting-completed/domain";
+import { CLIENTS, navForRole, ROLES } from "@accounting-completed/domain";
 import { Avatar, AvatarRound, Button } from "@accounting-completed/ui";
 import { useRole } from "../app/role-context";
+import { useClient } from "../app/client-context";
 import { ICONS } from "./icons";
 
 interface SidebarProps {
-  clientName?: string;
-  clientInitials?: string;
-  clientSub?: string;
   onClientClick?: () => void;
 }
 
-export function Sidebar({
-  clientName = "Atlas Coffee Roasters",
-  clientInitials = "AC",
-  clientSub = "FY 2026 · QBO synced",
-  onClientClick,
-}: SidebarProps) {
+export function Sidebar({ onClientClick }: SidebarProps) {
   const { role } = useRole();
+  const { clientId } = useClient();
   const r = ROLES[role] ?? ROLES.staff;
+  const client = CLIENTS.find((c) => c.id === clientId) ?? CLIENTS[0];
   const groups = navForRole(role);
 
   return (
@@ -41,19 +36,19 @@ export function Sidebar({
           type="button"
           className="mx-3 mt-3 px-3 py-2.5 flex items-center gap-3 bg-muted border border-border rounded-md hover:bg-secondary hover:border-border-strong transition-colors text-left"
         >
-          <Avatar size={32} className="text-[12px]">{clientInitials}</Avatar>
+          <Avatar size={32} className="text-[12px]">{client.initials}</Avatar>
           <div className="flex-1 min-w-0">
-            <div className="text-[13.5px] font-medium truncate">{clientName}</div>
-            <div className="text-[11px] text-text-soft truncate">{clientSub}</div>
+            <div className="text-[13.5px] font-medium truncate">{client.name}</div>
+            <div className="text-[11px] text-text-soft truncate">{client.sub}</div>
           </div>
           <span className="text-text-soft flex-shrink-0">{ICONS.chevUpDown}</span>
         </button>
       ) : (
         <div className="mx-3 mt-3 px-3 py-2.5 flex items-center gap-3 bg-muted border border-border rounded-md">
-          <Avatar size={32} className="text-[12px]">{clientInitials}</Avatar>
+          <Avatar size={32} className="text-[12px]">{client.initials}</Avatar>
           <div className="flex-1 min-w-0">
-            <div className="text-[13.5px] font-medium truncate">{clientName}</div>
-            <div className="text-[11px] text-text-soft truncate">{clientSub}</div>
+            <div className="text-[13.5px] font-medium truncate">{client.name}</div>
+            <div className="text-[11px] text-text-soft truncate">{client.sub}</div>
           </div>
         </div>
       )}

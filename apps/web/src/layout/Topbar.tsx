@@ -1,13 +1,14 @@
 import { Fragment } from "react";
+import type { Role } from "@accounting-completed/domain";
 import { Button, Kbd } from "@accounting-completed/ui";
 import { useRole } from "../app/role-context";
 import { ICONS } from "./icons";
 
-const ROLE_PILL = {
+const ROLE_PILL: Record<Role, { label: string; cls: string }> = {
   staff:    { label: "Firm staff",     cls: "bg-primary/15 text-primary" },
   owner:    { label: "Business owner", cls: "bg-positive/15 text-positive" },
   employee: { label: "Employee",       cls: "bg-info/15 text-info" },
-} as const;
+};
 
 interface TopbarProps {
   crumbs?: string[];
