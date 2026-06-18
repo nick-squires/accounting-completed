@@ -11,11 +11,12 @@ export default [
         "error",
         {
           allow: [],
-          depConstraints: [
-            { sourceTag: "*", onlyDependOnLibsWithTags: ["*"] }
-          ]
-        }
-      ]
-    }
-  }
+          depConstraints: [{ sourceTag: "*", onlyDependOnLibsWithTags: ["*"] }],
+        },
+      ],
+    },
+  },
+  {
+    ignores: ["**/vite.config.*.timestamp*", "**/vitest.config.*.timestamp*"],
+  },
 ];

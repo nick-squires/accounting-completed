@@ -8,3 +8,6 @@ dist
 *.tsbuildinfo
 test-output
 playwright-report
+
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
