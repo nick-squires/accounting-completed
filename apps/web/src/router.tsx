@@ -1,11 +1,11 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppLayout } from "./layout/AppLayout";
 import { StubPage } from "./routes/_stub/StubPage";
+import { LoginPage } from "./routes/login/LoginPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/login" replace /> },
-  // TODO(Task 9): replace with real LoginPage
-  { path: "/login", element: <StubPage />, handle: { title: "Login", crumbs: [] } },
+  { path: "/login", element: <LoginPage /> },
   {
     element: <AppLayout />,
     children: [
