@@ -1,1 +1,4 @@
-/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+
+/* Verify Tailwind is wired before the theme package exists. */
+body { background: #f4f6f8; }
