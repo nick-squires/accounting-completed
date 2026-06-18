@@ -1,0 +1,8 @@
+{
+  "name": "@accounting-completed/web",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "@accounting-completed/theme": "workspace:*"
+  }
+}

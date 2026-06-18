@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@accounting-completed/theme/theme.css";
 
-/* Verify Tailwind is wired before the theme package exists. */
-body { background: #f4f6f8; }
+/* Tailwind v4 must scan the ui package's class usage too (added in Task 6). */
+@source "../../../packages/ui/src";
