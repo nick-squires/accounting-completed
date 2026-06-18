@@ -1,3 +1,10 @@
 .thumbnail
 .DS_Store
 Thumbs.db
+node_modules
+dist
+.nx/cache
+.nx/workspace-data
+*.tsbuildinfo
+test-output
+playwright-report
