@@ -52,12 +52,14 @@ interface AvatarProps {
   src?: string;
   size?: number;
   className?: string;
+  children?: React.ReactNode;
 }
 
-function Avatar({ name, src, size = 32, className }: AvatarProps) {
-  const initials = name
+function Avatar({ name, src, size = 32, className, children }: AvatarProps) {
+  const derivedInitials = name
     ? name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : "?";
+  const fallbackContent = children ?? derivedInitials;
   return (
     <AvatarRoot
       className={cn("rounded-lg bg-gradient-to-br from-[hsl(207_45%_85%)] to-[hsl(207_35%_72%)] text-primary", className)}
@@ -65,7 +67,7 @@ function Avatar({ name, src, size = 32, className }: AvatarProps) {
     >
       {src && <AvatarImage src={src} alt={name} />}
       <AvatarFallback className="bg-transparent text-primary text-xs font-semibold rounded-lg">
-        {initials}
+        {fallbackContent}
       </AvatarFallback>
     </AvatarRoot>
   );

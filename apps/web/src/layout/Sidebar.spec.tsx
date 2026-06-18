@@ -47,4 +47,22 @@ describe("Sidebar", () => {
     expect(screen.getByText("Atlas Coffee Roasters")).toBeTruthy();
     expect(screen.getByText("LLC · Food & Beverage")).toBeTruthy();
   });
+
+  it("renders client avatar initials (not '?') in the client switcher", () => {
+    renderSidebar();
+    // CLIENTS[0].initials = "AC" — Avatar must render children, not fall back to "?"
+    // Note: "AC" also appears in the brand logo div, so we find all matches and
+    // assert at least one is the square avatar fallback span (rounded-lg).
+    const acNodes = screen.getAllByText("AC");
+    const avatarFallback = acNodes.find(
+      (el) => el.tagName.toLowerCase() === "span" && el.className.includes("rounded-lg")
+    );
+    expect(avatarFallback).toBeTruthy();
+    // The client switcher avatar must NOT show the generic fallback "?"
+    const questionNodes = screen.queryAllByText("?");
+    const clientAvatarQuestion = questionNodes.find(
+      (el) => el.tagName.toLowerCase() === "span" && el.className.includes("rounded-lg")
+    );
+    expect(clientAvatarQuestion).toBeUndefined();
+  });
 });
