@@ -17,7 +17,8 @@
       "@accounting-completed/domain": ["packages/domain/src/index.ts"],
       "@accounting-completed/theme/*": ["packages/theme/src/*"],
       "@accounting-completed/ui": ["packages/ui/src/index.ts"],
-      "@accounting-completed/utils": ["packages/utils/src/index.ts"]
+      "@accounting-completed/utils": ["packages/utils/src/index.ts"],
+      "ui": ["packages/ui/src/index.ts"]
     }
   }
 }
