@@ -14,7 +14,7 @@
 - **No DB schema changes.** Prisma is **introspect-only**; the only DB traffic is reads (and credential verification). No migrations against the existing DB.
 - **No committed secrets.** `.env` is git-ignored; `.env.example` documents keys. Working DB creds live in `MyAccountantsCloud/MacApi/Web.config` + the project memory.
 - **DB (verified):** server `brandedcloudaccounting.database.windows.net,1433`, DB `brandedcloudaccountingtest_shelby3`, user `application_login_prod` (from `MacApi/Web.config`). 38 models introspect cleanly incl. `Users`. Demo firm `Client_Id 69`.
-- **Auth:** verify password as **MD5 uppercase-hex** (`FormsAuthentication.HashPasswordForStoringInConfigFile(pwd,"md5")`) against `Users.Password`; issue a signed JWT in an `httpOnly; Secure; SameSite=Lax` cookie. **No authorization/role gating in this pass** — only authenticate + derive firm (`Client_Id`) from the session.
+- **Auth:** verify password as **MD5 uppercase-hex** (`FormsAuthentication.HashPasswordForStoringInConfigFile(pwd,"md5")`) against `Users.Password`; issue a signed JWT returned as a **Bearer token** (client sends `Authorization: Bearer <token>`; **no cookie**). Token stored client-side in localStorage (pass-1 tradeoff). **No role gating except `/api/clients` is staff-only** (privacy); derive firm (`Client_Id`) from the token. Logout is client-side; no server revocation.
 - **Module boundaries:** `scope:db`→[], `scope:contracts`→[], `scope:server`→[`scope:db`,`scope:contracts`], `scope:api-client`→[`scope:contracts`] (+ type-only `server` for `AppType`), `scope:api`→[`scope:server`], `scope:web`→adds [`scope:api-client`,`scope:contracts`]. `web` must not import `server`/`db`/`api` at runtime.
 - **Hosting:** Azure App Service (long-lived Node). Single Prisma pool.
 - **pnpm v11:** approve build scripts (`pnpm.onlyBuiltDependencies`) for `esbuild`, `@prisma/client`, `@prisma/engines`, `prisma` — else `nx`/`prisma` fail the deps-status check.
@@ -208,7 +208,7 @@ Run `RUN_DB_TESTS=1 pnpm exec nx run db:test` → PASS (or skipped). Adjust fiel
 
 **Files:** Create lib + `src/{auth.ts,clients.ts,error.ts,index.ts,auth.spec.ts}`; Modify `tsconfig.base.json`.
 
-**Interfaces:** `loginRequestSchema` + `LoginRequest`; `sessionUserSchema` + `SessionUser` (`{ userId; username; firmClientId; roles: { isStaff; isCustomer; isEmployee; isAdmin } }`); `clientsResponseSchema` + `ClientSummary`; `apiErrorSchema` + `ApiError` (`{ error: { code; message; details? } }`).
+**Interfaces:** `loginRequestSchema` + `LoginRequest`; `sessionUserSchema` + `SessionUser` (`{ userId; username; firmClientId; roles: { isStaff; isCustomer; isEmployee; isAdmin } }`); `loginResponseSchema` + `LoginResponse` (`{ token: string; user: SessionUser }`); `clientsResponseSchema` + `ClientSummary`; `apiErrorSchema` + `ApiError` (`{ error: { code; message; details? } }`).
 
 - [ ] **Step 1: Generate lib** (`@nx/js:library contracts … --bundler=none --unitTestRunner=vitest`); name `@accounting-completed/contracts`, tags `["type:lib","scope:contracts"]`; alias; add `zod` dep.
 
@@ -241,6 +241,9 @@ export const sessionUserSchema = z.object({
   roles: z.object({ isStaff: z.boolean(), isCustomer: z.boolean(), isEmployee: z.boolean(), isAdmin: z.boolean() }),
 });
 export type SessionUser = z.infer<typeof sessionUserSchema>;
+
+export const loginResponseSchema = z.object({ token: z.string(), user: sessionUserSchema });
+export type LoginResponse = z.infer<typeof loginResponseSchema>;
 ```
 `src/clients.ts`:
 ```ts
@@ -373,21 +376,28 @@ export async function readSession(token: string): Promise<SessionUser | null> {
 - [ ] **Step 4: requestContext + requireAuth** — `src/middleware/request-context.ts`:
 ```ts
 import { createMiddleware } from "hono/factory";
-import { getCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
 import type { SessionUser } from "@accounting-completed/contracts";
 import { readSession } from "../auth/jwt";
 
-export const SESSION_COOKIE = "ac_session";
+type Vars = { Variables: { user: SessionUser | null } };
 
-export const requestContext = createMiddleware<{ Variables: { user: SessionUser | null } }>(async (c, next) => {
-  const token = getCookie(c, SESSION_COOKIE);
+export const requestContext = createMiddleware<Vars>(async (c, next) => {
+  const header = c.req.header("Authorization");
+  const token = header?.startsWith("Bearer ") ? header.slice(7) : null;
   c.set("user", token ? await readSession(token) : null);
   await next();
 });
 
-export const requireAuth = createMiddleware<{ Variables: { user: SessionUser | null } }>(async (c, next) => {
+export const requireAuth = createMiddleware<Vars>(async (c, next) => {
   if (!c.get("user")) throw new HTTPException(401, { message: "Not authenticated" });
+  await next();
+});
+
+export const requireStaff = createMiddleware<Vars>(async (c, next) => {
+  const user = c.get("user");
+  if (!user) throw new HTTPException(401, { message: "Not authenticated" });
+  if (!user.roles.isStaff) throw new HTTPException(403, { message: "Staff only" });
   await next();
 });
 ```
@@ -409,14 +419,18 @@ describe("auth routes", () => {
     const res = await app.request("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username: "demo", password: "wrong" }) });
     expect(res.status).toBe(401);
   });
-  it("logs in, sets a cookie, and /me returns the user", async () => {
+  it("logs in, returns a token, and /me accepts the Bearer token", async () => {
     const login = await app.request("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username: "demo", password: "pw" }) });
     expect(login.status).toBe(200);
-    const cookie = login.headers.get("set-cookie")!;
-    expect(cookie).toMatch(/ac_session=/);
-    const me = await app.request("/api/auth/me", { headers: { cookie: cookie.split(";")[0] } });
+    const { token, user } = await login.json();
+    expect(typeof token).toBe("string");
+    expect(user.username).toBe("demo");
+    const me = await app.request("/api/auth/me", { headers: { authorization: `Bearer ${token}` } });
     expect(me.status).toBe(200);
     expect((await me.json()).username).toBe("demo");
+  });
+  it("rejects /me without a token (401)", async () => {
+    expect((await app.request("/api/auth/me")).status).toBe(401);
   });
 });
 ```
@@ -424,13 +438,12 @@ describe("auth routes", () => {
 ```ts
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { setCookie, deleteCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
 import { loginRequestSchema, type SessionUser } from "@accounting-completed/contracts";
 import type { UserRow } from "@accounting-completed/db";
 import { verifyPassword } from "./password";
 import { signSession } from "./jwt";
-import { SESSION_COOKIE, requireAuth } from "../middleware/request-context";
+import { requireAuth } from "../middleware/request-context";
 
 export interface AuthDeps { findByUsername(username: string): Promise<UserRow | null>; }
 
@@ -447,10 +460,9 @@ export function createAuthRoutes(deps: AuthDeps) {
       if (!row || !verifyPassword(password, row.Password)) throw new HTTPException(401, { message: "Invalid credentials" });
       const user = toSessionUser(row);
       const token = await signSession(user);
-      setCookie(c, SESSION_COOKIE, token, { httpOnly: true, secure: true, sameSite: "Lax", path: "/", maxAge: 60 * 60 * 8 });
-      return c.json(user);
+      return c.json({ token, user });
     })
-    .post("/logout", (c) => { deleteCookie(c, SESSION_COOKIE, { path: "/" }); return c.json({ ok: true }); })
+    .post("/logout", (c) => c.json({ ok: true })) // stateless: client drops the token
     .get("/me", requireAuth, (c) => c.json(c.get("user")));
 }
 ```
@@ -464,18 +476,18 @@ export function createAuthRoutes(deps: AuthDeps) {
 
 **Interfaces:** `createClientsRoutes(deps)` → `GET /api/clients` (requireAuth; firm from `c.get("user").firmClientId`); `deps.list(firmClientId): Promise<ClientRow[]>`.
 
-- [ ] **Step 1: Failing test** — `src/clients/routes.spec.ts`: build a Hono app that injects a `user` (via a middleware setting `c.set("user", { ...firmClientId: 69 })`) then mounts `createClientsRoutes({ list: async () => [{ UserId: 2189, Company_Name: "Demo Co", Full_Name: "x" }] })`; assert `GET /api/clients` → 200 and body `[{ id: "2189", name: "Demo Co" }]`; assert no-user → 401.
+- [ ] **Step 1: Failing test** — `src/clients/routes.spec.ts`: build a Hono app whose middleware injects a **staff** `user` (`c.set("user", { userId:1, username:"s", firmClientId:69, roles:{ isStaff:true, isCustomer:false, isEmployee:false, isAdmin:false } })`) then mounts `createClientsRoutes({ list: async () => [{ UserId: 2189, Company_Name: "Demo Co", Full_Name: "x" }] })`; assert `GET /api/clients` → 200 and body `[{ id: "2189", name: "Demo Co" }]`. Add cases: a **non-staff** user → **403**; **no** user → **401** (build separate app instances injecting those users / null).
 - [ ] **Step 2: Implement** — `src/clients/routes.ts`:
 ```ts
 import { Hono } from "hono";
 import { clientsResponseSchema, type SessionUser } from "@accounting-completed/contracts";
 import type { ClientRow } from "@accounting-completed/db";
-import { requireAuth } from "../middleware/request-context";
+import { requireStaff } from "../middleware/request-context";
 
 export interface ClientsDeps { list(firmClientId: number): Promise<ClientRow[]>; }
 
 export function createClientsRoutes(deps: ClientsDeps) {
-  return new Hono<{ Variables: { user: SessionUser | null } }>().get("/", requireAuth, async (c) => {
+  return new Hono<{ Variables: { user: SessionUser | null } }>().get("/", requireStaff, async (c) => {
     const firm = c.get("user")!.firmClientId ?? 0;
     const rows = await deps.list(firm);
     return c.json(clientsResponseSchema.parse(rows.map((r) => ({ id: String(r.UserId), name: r.Company_Name?.trim() || r.Full_Name }))));
@@ -512,14 +524,26 @@ Add root scripts `"dev:api": "nx run api:serve"`. Verify `nx run api:serve` + `c
 import { hc } from "hono/client";
 import type { AppType } from "@accounting-completed/server";
 
+const TOKEN_KEY = "ac_token";
+export function getToken(): string | null {
+  return typeof localStorage !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+}
+export function setToken(t: string | null): void {
+  if (typeof localStorage === "undefined") return;
+  if (t) localStorage.setItem(TOKEN_KEY, t);
+  else localStorage.removeItem(TOKEN_KEY);
+}
+
 const BASE = (import.meta as { env?: Record<string, string> }).env?.VITE_API_BASE_URL ?? "";
-export const apiClient = hc<AppType>(BASE, { init: { credentials: "include" } });
+export const apiClient = hc<AppType>(BASE, {
+  headers: () => { const t = getToken(); return t ? { Authorization: `Bearer ${t}` } : {}; },
+});
 ```
 - [ ] **Step 2: hooks** — `src/use-auth.ts`:
 ```ts
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LoginRequest, SessionUser } from "@accounting-completed/contracts";
-import { apiClient } from "./client";
+import { apiClient, setToken } from "./client";
 
 export function useMe() {
   return useQuery<SessionUser | null>({
@@ -582,9 +606,9 @@ export function RequireAuth() {
 ```
 - [ ] **Step 4: LoginPage** — replace the fake navigate with `const login = useLogin(); ... onSubmit → login.mutateAsync({username,password}).then(() => navigate("/dashboard")).catch(show error)`. Keep the existing two-panel layout.
 - [ ] **Step 5: router** — wrap the `AppLayout` route element so it's a child of a `RequireAuth` route (`{ element: <RequireAuth/>, children: [ { element: <AppLayout/>, children: [...] } ] }`).
-- [ ] **Step 6: Sidebar switcher** — replace mock `CLIENTS` usage in the client switcher with `useClients()` data; selecting one sets `ClientContext` (keep context, feed it real ids/names). Loading/empty states.
+- [ ] **Step 6: Sidebar switcher** — replace mock `CLIENTS` usage with `useClients()` data (the endpoint is **staff-only**, so render the switcher only when `useMe()` shows a staff user); selecting one sets `ClientContext` (keep context, feed it real ids/names). Loading/empty states.
 - [ ] **Step 7: Page test (MSW)** — `LoginPage.spec.tsx`: mock `/api/auth/login` + `/api/auth/me`; type credentials, submit, assert navigation/`me` populated. Run `nx run web:test` → PASS.
-- [ ] **Step 8: Live verify** — run `nx run api:serve` + `nx run web:dev`; log in with a real DB credential; confirm session persists (cookie), `/dashboard` loads, the switcher lists real firm-69 clients; logout returns to `/login`.
+- [ ] **Step 8: Live verify** — run `nx run api:serve` + `nx run web:dev`; log in with a **real DB credential** (use a **staff** account to populate the switcher; any valid account proves `/me`). Confirm the token persists across reload (localStorage), `/dashboard` loads, the staff switcher lists real firm-69 clients (non-staff: switcher hidden by design; `/api/clients` → 403), and logout clears the token and returns to `/login`. (You provide the test credential — passwords aren't knowable from the data.)
 - [ ] **Step 9: Commit** — `git add apps/web && git commit -m "feat(web): real login + route guard + live client switcher"`
 
 ---
@@ -603,7 +627,7 @@ export function RequireAuth() {
 ## Follow-on (separate plans)
 1. **Income statement page** — un-defer `…-income-statement-page-DEFERRED.md`; rebuild on this foundation (proc convention `callProc` + report page).
 2. **Authorization** — enforce `RoleAccess` permissions + per-firm/client query scoping depth.
-3. **Password hardening** — transparent rehash (argon2/bcrypt) on login (needs sanctioned `Users.Password` writes); audit `Password_Normal`.
+3. **Auth hardening** — transparent rehash (argon2/bcrypt) on login (needs sanctioned `Users.Password` writes); audit `Password_Normal`; move the access token off localStorage (in-memory + httpOnly refresh-token rotation); add login rate-limiting/lockout (`Attempt_Count`/`Attempt_Datetime`); add token revocation.
 4. **Observability/secrets** — APM, Azure Key Vault for `JWT_SECRET`/DB creds.
 
 ## Self-Review notes

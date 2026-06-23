@@ -33,7 +33,7 @@ The bar is **foundation-grade on every layer** — not a minimum slice.
 | Data access | Repository pattern over Prisma; stored procs (future) via typed `$queryRaw` + zod result schemas |
 | Frontend data layer | **React Query** hooks in `packages/api-client`, built on the Hono RPC client + contract validation |
 | Proving consumer | **Clients list** end-to-end, wired into the real Sidebar/`ClientContext` switcher (replacing mock `CLIENTS`) |
-| Auth | **First-party credentials**, verified against existing `Users`; signed JWT in an httpOnly cookie (see §3a) |
+| Auth | **First-party credentials**, verified against existing `Users`; signed JWT as a **Bearer token** (`Authorization` header) (see §3a) |
 | Authorization | **Omitted in the first pass** — authenticate + derive firm from session for data-scoping, but no role/permission gating yet |
 | Hosting | **Azure App Service** (long-lived Node host; single Prisma connection pool) |
 | Scope | **Foundation only.** Income-statement page deferred. |
@@ -42,10 +42,10 @@ The bar is **foundation-grade on every layer** — not a minimum slice.
 
 - **First-party credential auth.** No external IdP. Our own React sign-in page POSTs username + password to the Hono API. We do **not** reuse the legacy `.ASPXAUTH` Forms ticket, `machineKey`, or the DES-encrypted role cookies (verified: legacy is ASP.NET Forms Auth + per-session DES cookies — brittle and tightly coupled; avoided entirely).
 - **Verify against the existing `Users` table (read-only).** Legacy stores passwords as **MD5** via `FormsAuthentication.HashPasswordForStoringInConfigFile(pwd, "md5")` (uppercase hex). Our login computes the same MD5 over the entered password and compares to `Users.Password`. (Confirm the exact byte encoding against a known credential during implementation.)
-- **Session = signed JWT in an `httpOnly`, `Secure`, `SameSite=Lax` cookie.** Stateless → no sessions table (respects no-DB-changes). Claims: `userId`, firm `clientId` (`Client_Id`), `roleId`, and role flags (`isStaff`/`isCustomer`/`isEmployee`/`isAdmin`), read from the `Users` row at login. Sliding re-issue; logout clears the cookie. JWT secret from env/secret store; short lifetime.
-- **`requestContext` middleware** verifies the cookie and exposes `{ user, firmClientId, roles }`; every endpoint scopes off it (the clients list takes the firm from context, not a query param).
+- **Session = a signed JWT issued as a `Bearer` token** — returned in the login response and sent by the client in the `Authorization: Bearer <token>` header. Stateless → no sessions table (respects no-DB-changes) **and works cross-origin** regardless of where web/API are hosted. Claims: `userId`, firm `clientId` (`Client_Id`), `roleId`, role flags (`isStaff`/`isCustomer`/`isEmployee`/`isAdmin`), from the `Users` row at login. Logout is client-side (drop the token); **no server-side revocation** this pass. JWT secret from env/secret store; short lifetime.
+- **`requestContext` middleware** verifies the `Authorization: Bearer` token and exposes `{ user, firmClientId, roles }`; endpoints scope off it. The **clients list is staff-only** and takes the firm from the token (not a query param).
 - **Endpoints:** `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`.
-- **Security debt flagged:** (1) MD5 is weak — acceptable only as a *verification shim* for existing hashes; plan a transparent rehash to argon2/bcrypt on successful login once limited writes to `Users.Password` are sanctioned. (2) Inspect `Users.Password_Normal` — if it holds plaintext/recoverable passwords, treat as a cleanup item.
+- **Security debt flagged (accepted for pass 1):** (1) MD5 is weak — verification shim only; plan a transparent rehash to argon2/bcrypt on login once limited `Users.Password` writes are sanctioned. (2) Inspect `Users.Password_Normal` — if plaintext, treat as cleanup. (3) Bearer token in localStorage is XSS-exfiltratable; harden later with in-memory access token + refresh-token rotation. (4) No login rate-limiting/lockout this pass (legacy `Attempt_Count`/`Attempt_Datetime` exist). (5) No token revocation (stateless, ~8h TTL).
 
 ## 4. Prisma 7 setup (verified specifics)
 
