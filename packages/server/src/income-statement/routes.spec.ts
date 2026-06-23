@@ -76,6 +76,14 @@ describe("income statement routes", () => {
     expect(res.status).toBe(404);
   });
 
+  it("404s on /years when the client is not in the caller's firm", async () => {
+    const app = appWith();
+    const res = await app.request("/api/income-statement/years?clientId=9999", {
+      headers: { Authorization: await bearer(staff) },
+    });
+    expect(res.status).toBe(404);
+  });
+
   it("400s on a non-numeric year", async () => {
     const app = appWith();
     const res = await app.request("/api/income-statement?clientId=2189&year=abc", {
