@@ -47,6 +47,43 @@ export default [
               sourceTag: "scope:domain",
               onlyDependOnLibsWithTags: [],
             },
+            // db: leaf — no internal lib dependencies
+            {
+              sourceTag: "scope:db",
+              onlyDependOnLibsWithTags: [],
+            },
+            // contracts: leaf — no internal lib dependencies
+            {
+              sourceTag: "scope:contracts",
+              onlyDependOnLibsWithTags: [],
+            },
+            // server may depend on db and contracts only
+            {
+              sourceTag: "scope:server",
+              onlyDependOnLibsWithTags: ["scope:db", "scope:contracts"],
+            },
+            // api-client depends on contracts at runtime and server for type-only AppType import
+            {
+              sourceTag: "scope:api-client",
+              onlyDependOnLibsWithTags: ["scope:contracts", "scope:server"],
+            },
+            // apps/api depends on server only
+            {
+              sourceTag: "scope:api",
+              onlyDependOnLibsWithTags: ["scope:server"],
+            },
+            // web app: ui/domain/utils/theme + api-client + contracts (NO server/db/api)
+            {
+              sourceTag: "scope:web",
+              onlyDependOnLibsWithTags: [
+                "scope:ui",
+                "scope:domain",
+                "scope:utils",
+                "scope:theme",
+                "scope:api-client",
+                "scope:contracts",
+              ],
+            },
           ],
         },
       ],

@@ -5,8 +5,22 @@
   "projectType": "library",
   "tags": ["type:lib", "scope:db"],
   "targets": {
+    "prisma-generate": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/prisma/schema.prisma",
+        "{projectRoot}/prisma.config.ts"
+      ],
+      "outputs": ["{projectRoot}/generated"],
+      "options": {
+        "command": "pnpm exec prisma generate",
+        "cwd": "packages/db"
+      }
+    },
     "test": {
       "executor": "@nx/vite:test",
+      "dependsOn": ["prisma-generate"],
       "options": {
         "config": "packages/db/vite.config.ts"
       }
