@@ -12,6 +12,9 @@ playwright-report
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
 
+# Prisma generated client — regenerated via prisma generate
+packages/db/generated/
+
 # Environment variables — never commit real secrets
 .env
 .env.local

@@ -1,0 +1,669 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlserver"
+}
+
+model RefactorLog {
+  OperationKey String @id(map: "PK____Refact__D3AEFFDBFFBFDEFD") @db.UniqueIdentifier
+
+  @@map("__RefactorLog")
+}
+
+model AccountMaster {
+  Id                Int      @id(map: "PK_AccountMaster") @default(autoincrement())
+  Account           String?  @db.NVarChar(Max)
+  Parent_Account_Id Int?
+  Type              String?  @db.NVarChar(100)
+  Is_Active         Boolean?
+}
+
+model Accounts {
+  Account_Code                              Int                    @id(map: "PK__Account__743DED6C08EA5793") @default(autoincrement())
+  Account_ID                                String?                @db.VarChar(100)
+  Account_Name                              String?                @db.NVarChar(100)
+  Parent_Account_ID                         String?                @db.VarChar(100)
+  Account_Category                          String?                @db.NVarChar(100)
+  Bank_Account_Type                         String?                @db.VarChar(50)
+  Account_Type                              String?                @db.NVarChar(100)
+  Currency_Code                             String?                @db.VarChar(10)
+  Account_Description                       String?                @db.VarChar(1000)
+  Display_Position                          Int?
+  Institution_ID                            String?                @db.VarChar(100)
+  Account_Status                            String?                @db.VarChar(50)
+  Created_Date                              DateTime?              @db.DateTime
+  Is_Active                                 Boolean?
+  UserId                                    Int?
+  Balance                                   Decimal?               @db.Decimal(10, 2)
+  ApplicationIdOrig                         Int?
+  InstitutionLoginIdOrig                    Int?
+  ApplicationId                             String?                @db.VarChar(50)
+  InstitutionLoginId                        String?                @db.VarChar(50)
+  TransactionImportStartDate                DateTime?              @db.DateTime
+  Finicity_Balance                          Decimal?               @db.Decimal(10, 2)
+  Finicity_Balance_Date                     DateTime?              @db.DateTime
+  Finicity_Aggregation_Status_Code          Int?
+  Finicity_Aggregation_Success_Date         DateTime?              @db.DateTime
+  Finicity_Aggregation_Attempt_Date         DateTime?              @db.DateTime
+  Finicity_Aggregation_LastTransaction_Date DateTime?              @db.DateTime
+  DefaultClassId                            Int?
+  Class                                     Class?                 @relation(fields: [DefaultClassId], references: [ClassId], onDelete: NoAction, onUpdate: NoAction, map: "FK_Accounts_DefaultClass")
+  Users                                     Users?                 @relation(fields: [UserId], references: [UserId], onDelete: NoAction, onUpdate: NoAction, map: "FK_Accounts_Users")
+  AccountTransaction                        AccountTransaction[]
+  ClassRule                                 ClassRule[]
+  UncategorizedEntries                      UncategorizedEntries[]
+
+  @@unique([UserId, Account_Code, Account_ID], map: "UQ_Accounts_UserId_AccountCode_AccountID")
+  @@index([UserId, Account_Name, Is_Active], map: "nci_wi_Accounts_A3478D417F2277639290C1AE8411F4C8")
+  @@index([Account_ID, Account_Type], map: "nci_wi_Accounts_F09B26FCEC6B46624C356588941411C0")
+}
+
+model AccountTransaction {
+  Transaction_Code                Int                               @id(map: "PK__AccountT__1B76151C7F60ED59") @default(autoincrement())
+  Account_Code                    Int?
+  Transaction_ID                  String                            @db.VarChar(50)
+  Institution_Transaction_ID      String?                           @db.VarChar(100)
+  Account_ID                      String?                           @db.VarChar(50)
+  Amount                          Decimal                           @db.Decimal(10, 2)
+  Currency                        String?                           @db.VarChar(50)
+  Memo                            String?
+  Payee_Name                      String?                           @db.NVarChar(Max)
+  Posted_Date                     DateTime?                         @db.DateTime
+  Ref_Number                      String?                           @db.VarChar(100)
+  Created_Date                    DateTime?                         @db.DateTime
+  Is_Approve                      Boolean?
+  Is_Active                       Boolean?                          @default(true, map: "DF__AccountTr__Is_Ac__03317E3D")
+  Category_Name                   String?                           @db.VarChar(100)
+  scheduleC                       String?                           @db.VarChar(Max)
+  UserId                          Int?
+  NormalizedPayeeName             String?                           @db.VarChar(200)
+  Source                          String?                           @db.VarChar(100)
+  TransactionType                 String?                           @db.VarChar(100)
+  Pending                         Boolean?                          @default(false, map: "DF__AccountTr__Pendi__1ED998B2")
+  CheckNumber                     String?                           @db.VarChar(100)
+  CorrectAction                   String?                           @db.VarChar(100)
+  IsAggCat                        Boolean?                          @default(true, map: "DF_AccountTransaction_IsAggCat")
+  IsClose                         Boolean?
+  IsGrouped                       Boolean?
+  Updated_Date                    DateTime?                         @db.DateTime
+  Updated_By                      String?                           @db.NVarChar(100)
+  SourceType                      String?                           @db.VarChar(100)
+  OriginatingTransactionCode      Int?
+  Is_Corresponding_Transaction    Boolean?
+  BATCH_ID                        String?                           @db.VarChar(100)
+  Finicity_Normalized_PayeeName   String?                           @db.NVarChar(4000)
+  Finicity_Best_Representation    String?                           @db.NVarChar(4000)
+  IsArchived                      Boolean                           @default(false, map: "DF__AccountTr__IsArc__149C0161")
+  ClassId                         Int?
+  IsClassManuallySet              Boolean                           @default(false, map: "DF_AccountTransaction_IsClassManuallySet")
+  Accounts                        Accounts?                         @relation(fields: [Account_Code], references: [Account_Code], onDelete: NoAction, onUpdate: NoAction, map: "AccountTransaction_Accounts_FK")
+  Class                           Class?                            @relation(fields: [ClassId], references: [ClassId], onDelete: NoAction, onUpdate: NoAction, map: "FK_AccountTransaction_Class")
+  AccountTransactionUpdateHistory AccountTransactionUpdateHistory[]
+  EasyEditTransaction             EasyEditTransaction[]
+
+  @@index([Account_Code, Created_Date], map: "IX_AccountTransaction_Account_Code_Created_Date")
+  @@index([UserId, Account_Code], map: "nci_msft_1_AccountTransaction_10D64D5E803C79130F6C3D4E6BBACD6C")
+  @@index([Account_ID, Posted_Date], map: "nci_wi_AccountTransaction_06B70A5611EF7F6543982C3B43A2A46B")
+  @@index([Transaction_ID], map: "nci_wi_AccountTransaction_1C727240E13B57FED8EB8A895FD17AF1")
+  @@index([UserId, Transaction_ID], map: "nci_wi_AccountTransaction_BC6132ED9B9D0BACA4F7D86FBF753BFD")
+  @@index([Is_Active, UserId, Posted_Date], map: "nci_wi_AccountTransaction_C384A4DBE3D533937C367D0E87CC78E6")
+}
+
+model AccountTransactionUpdateHistory {
+  AccountTransactionUpdateHistoryId Int                  @id(map: "PK__AccountTransactionUpdateHistoryId__7543DED6C08EA5793") @default(autoincrement())
+  EasyEditId                        Int?
+  EasyEditTransactionId             Int?
+  TransactionUpdateType             String               @db.VarChar(100)
+  Transaction_Code                  Int
+  Transaction_ID                    String               @db.VarChar(50)
+  Old_Payee_Name                    String?              @db.NVarChar(Max)
+  New_Payee_Name                    String?              @db.NVarChar(Max)
+  Old_Category_Name                 String?              @db.VarChar(100)
+  New_Category_Name                 String?              @db.VarChar(100)
+  Old_Check_Number                  String?              @db.VarChar(100)
+  New_Check_Number                  String?              @db.VarChar(100)
+  Dont_Know                         Boolean?
+  Description                       String?              @db.NVarChar(Max)
+  CreatedDate                       DateTime             @db.DateTime
+  CreatedBy                         Int?
+  HistoryId                         Int?
+  Action                            String?              @db.VarChar(100)
+  AccountTransaction                AccountTransaction   @relation(fields: [Transaction_Code], references: [Transaction_Code], onDelete: Cascade, onUpdate: NoAction, map: "FK_AccountTransactionUpdateHistory_AccountTransactions")
+  EasyEdits                         EasyEdits?           @relation(fields: [EasyEditId], references: [EasyEditId], onDelete: NoAction, onUpdate: NoAction, map: "FK_AccountTransactionUpdateHistory_EasyEdits")
+  EasyEditTransaction               EasyEditTransaction? @relation(fields: [EasyEditTransactionId], references: [EasyEditTransactionId], onDelete: NoAction, onUpdate: NoAction, map: "FK_AccountTransactionUpdateHistory_EasyEditTransaction")
+  Users                             Users?               @relation(fields: [CreatedBy], references: [UserId], onDelete: NoAction, onUpdate: NoAction, map: "FK_AccountTransactionUpdateHistory_User")
+}
+
+model Class {
+  ClassId            Int                  @id(map: "PK_Class") @default(autoincrement())
+  UserId             Int
+  Name               String               @db.NVarChar(100)
+  ParentClassId      Int?
+  IsActive           Boolean              @default(true, map: "DF_Class_IsActive")
+  CreatedDate        DateTime             @default(dbgenerated("sysutcdatetime()"), map: "DF_Class_CreatedDate")
+  ModifiedDate       DateTime             @default(dbgenerated("sysutcdatetime()"), map: "DF_Class_ModifiedDate")
+  Accounts           Accounts[]
+  AccountTransaction AccountTransaction[]
+  Class              Class?               @relation("ClassToClass", fields: [ParentClassId], references: [ClassId], onDelete: NoAction, onUpdate: NoAction, map: "FK_Class_ParentClass")
+  other_Class        Class[]              @relation("ClassToClass")
+  Users              Users                @relation(fields: [UserId], references: [UserId], onUpdate: NoAction, map: "FK_Class_User")
+  ClassRule          ClassRule[]
+
+  @@unique([UserId, Name], map: "UQ_Class_User_Name")
+}
+
+model ClassRule {
+  ClassRuleId  Int       @id(map: "PK_ClassRule") @default(autoincrement())
+  UserId       Int
+  AccountId    Int?
+  ClassId      Int
+  Priority     Int       @default(0, map: "DF_ClassRule_Priority")
+  IsActive     Boolean   @default(true, map: "DF_ClassRule_IsActive")
+  MatchField   String    @db.NVarChar(50)
+  Operator     String    @db.NVarChar(50)
+  MatchValue   String    @db.NVarChar(200)
+  CreatedDate  DateTime  @default(dbgenerated("sysutcdatetime()"), map: "DF_ClassRule_CreatedDate")
+  ModifiedDate DateTime  @default(dbgenerated("sysutcdatetime()"), map: "DF_ClassRule_ModifiedDate")
+  Accounts     Accounts? @relation(fields: [AccountId], references: [Account_Code], onDelete: NoAction, onUpdate: NoAction, map: "FK_ClassRule_Account")
+  Class        Class     @relation(fields: [ClassId], references: [ClassId], onUpdate: NoAction, map: "FK_ClassRule_Class")
+  Users        Users     @relation(fields: [UserId], references: [UserId], onUpdate: NoAction, map: "FK_ClassRule_User")
+}
+
+model Client {
+  Client_Id     Int       @id(map: "PK_Client") @default(autoincrement())
+  UserName      String?   @db.NVarChar(50)
+  Email_Address String?   @db.VarChar(100)
+  Is_Active     Boolean?
+  Created_Date  DateTime? @db.DateTime
+  Modified_Date DateTime? @db.DateTime
+  Users         Users[]
+}
+
+model ClientApproveReport {
+  Report_Id          Int       @id(map: "PK_ClientApproveReport") @default(autoincrement())
+  Date_Range         String?   @db.VarChar(50)
+  UserId             Int?
+  ClientId           Int?
+  Cover_letter       String?   @db.VarChar(Max)
+  Disclaimer_letter  String?   @db.VarChar(Max)
+  Notes              String?   @db.VarChar(Max)
+  Report_Name        String?   @db.VarChar(Max)
+  CustomerClientId   Int
+  FileDate           DateTime? @db.Date
+  Comp_letter        String?   @db.VarChar(Max)
+  Income_notes       String?   @db.VarChar(50)
+  Balancesheet_notes String?   @db.VarChar(50)
+  Income_heading     String?   @db.NVarChar(250)
+  Balance_heading    String?   @db.NVarChar(250)
+  IsCover            Boolean?
+  IsIncomeStat       Boolean?
+  IsBalSheet         Boolean?
+  IsDisclaimer       Boolean?
+  IsCompilation      Boolean?
+  IsNotes            Boolean?
+  General_Ledger     String?   @db.NVarChar(Max)
+  IsGLedger          Boolean?
+}
+
+model Country {
+  Country_Code Int     @id(map: "PK__Country__A0D39295534D60F1") @default(autoincrement())
+  Country_Name String? @db.VarChar(100)
+  Country_Abbr String? @db.VarChar(3)
+  Users        Users[]
+}
+
+model CustomCategories {
+  ID             Int       @id(map: "PK__CustomCa__3214EC27B538BF12") @default(autoincrement())
+  UserId         Int?
+  Category_Name  String?   @db.VarChar(255)
+  Posted_Date    DateTime? @db.DateTime
+  IS_Future      Boolean?
+  Account_Id     String?   @db.VarChar(255)
+  Payee_Name     String?   @db.VarChar(255)
+  Account_Code   Int?
+  Old_Account_Id String?   @db.VarChar(100)
+  Is_Active      Boolean?
+  MatchType      Boolean?
+  Priority       Int?      @default(0, map: "DEFAULT_CustomCategories_Priority")
+}
+
+model Customer {
+  Customer_Id   Int       @id(map: "PK_Customer") @default(autoincrement())
+  UserName      String?   @db.NVarChar(50)
+  Email_Address String?   @db.VarChar(100)
+  Is_Active     Boolean?
+  Created_Date  DateTime? @db.DateTime
+  Modified_Date DateTime? @db.DateTime
+  Users         Users[]
+}
+
+model DashboardWidgets {
+  ID     Int    @id(map: "PK__Dashboar__3214EC2706853D25") @default(autoincrement())
+  UserId Int
+  Name   String @db.NVarChar(200)
+  Url    String @db.NVarChar(200)
+}
+
+model EasyEdits {
+  EasyEditId                              Int                               @id(map: "PK__EasyEditId__7543DED6C08EA5793") @default(autoincrement())
+  AccountantUserId                        Int
+  ClientUserId                            Int
+  FromDate                                DateTime                          @db.DateTime
+  ToDate                                  DateTime                          @db.DateTime
+  Category                                String                            @db.VarChar(50)
+  Account_Type                            String?                           @db.NVarChar(100)
+  Account_Code                            Int?
+  Is_Active                               Boolean?
+  Is_Submitted                            Boolean?
+  CreatedDate                             DateTime                          @db.DateTime
+  UpdatedDate                             DateTime?                         @db.DateTime
+  CreatedBy                               Int?
+  UpdatedBy                               Int?
+  Status                                  String?                           @db.VarChar(100)
+  AccountTransactionUpdateHistory         AccountTransactionUpdateHistory[]
+  Users_EasyEdits_AccountantUserIdToUsers Users                             @relation("EasyEdits_AccountantUserIdToUsers", fields: [AccountantUserId], references: [UserId], onUpdate: NoAction, map: "FK_EasyEdits_Accountant_Users")
+  Users_EasyEdits_ClientUserIdToUsers     Users                             @relation("EasyEdits_ClientUserIdToUsers", fields: [ClientUserId], references: [UserId], onUpdate: NoAction, map: "FK_EasyEdits_Client_Users")
+  EasyEditsHistory                        EasyEditsHistory[]
+  EasyEditTransaction                     EasyEditTransaction[]
+}
+
+model EasyEditsHistory {
+  EasyEditsHistoryId Int       @id(map: "PK__EasyEditHistoryId__7543DED6C08EA5793") @default(autoincrement())
+  EasyEditId         Int
+  Status             String    @db.NVarChar(100)
+  CreatedDate        DateTime  @db.DateTime
+  CreatedBy          Int
+  EasyEdits          EasyEdits @relation(fields: [EasyEditId], references: [EasyEditId], onUpdate: NoAction, map: "FK_EasyEdits_History")
+}
+
+model EasyEditTransaction {
+  EasyEditTransactionId             Int                               @id(map: "PK__EasyEditTransactionId__7543DED6C08EA5793") @default(autoincrement())
+  EasyEditId                        Int
+  Transaction_Code                  Int
+  AllowClientEdit                   Boolean?
+  AccountTransactionUpdateHistoryId Int?
+  AccountTransactionUpdateHistory   AccountTransactionUpdateHistory[]
+  EasyEdits                         EasyEdits                         @relation(fields: [EasyEditId], references: [EasyEditId], onUpdate: NoAction, map: "FK_EasyEditTransaction_EasyEdits")
+  AccountTransaction                AccountTransaction                @relation(fields: [Transaction_Code], references: [Transaction_Code], onDelete: Cascade, map: "FK_EasyEditTransaction_Transaction")
+}
+
+model ELMAH_Error {
+  ErrorId     String   @id(clustered: false, map: "PK_ELMAH_Error") @default(dbgenerated("newid()"), map: "DF_ELMAH_Error_ErrorId") @db.UniqueIdentifier
+  Application String   @db.NVarChar(60)
+  Host        String   @db.NVarChar(50)
+  Type        String   @db.NVarChar(100)
+  Source      String   @db.NVarChar(60)
+  Message     String   @db.NVarChar(500)
+  User        String   @db.NVarChar(50)
+  StatusCode  Int
+  TimeUtc     DateTime @db.DateTime
+  Sequence    Int      @default(autoincrement())
+  AllXml      String   @db.NText
+
+  @@index([Application, TimeUtc(sort: Desc), Sequence(sort: Desc)], map: "IX_ELMAH_Error_App_Time_Seq")
+}
+
+model ExtraDetailInstitutions {
+  ID              Int       @id(map: "PK_EDInst") @default(autoincrement())
+  InstitutionId   Int
+  InstitutionName String    @db.NVarChar(200)
+  CreatedBy       Int?
+  CreatedDate     DateTime? @db.Date
+}
+
+model FootNotes {
+  ID             Int     @id(map: "PK_FootNote") @default(autoincrement())
+  ClientId       Int
+  UserID         Int
+  PRFSBalaceNote String? @db.NVarChar(500)
+  PRFSIncomeNote String? @db.NVarChar(500)
+  BalaceNote     String? @db.NVarChar(500)
+  IncomeNote     String? @db.NVarChar(500)
+}
+
+model IncomePayment {
+  ClientId   Int
+  Month_Name String   @db.VarChar(5)
+  chk        Boolean?
+  Year_Name  String?  @db.VarChar(50)
+
+  @@id([ClientId, Month_Name], map: "PK_IncomePayment")
+}
+
+model InstitutionBankStatementParserConfiguration {
+  Id                           Int    @id(map: "PK__Institut__3214EC07CA5A83BA") @default(autoincrement())
+  InstitutionId                String @db.VarChar(50)
+  InstitutionName              String @db.NVarChar(300)
+  FullyQualifiedParserTypeName String @db.NVarChar(300)
+}
+
+model Institutions {
+  Institution_Code Int      @id(map: "PK_Institutions") @default(autoincrement())
+  Institution_Name String?  @db.NVarChar(300)
+  Institution_ID   String?  @db.VarChar(50)
+  IsDisabled       Boolean?
+}
+
+model JEAttachments {
+  AttachmentID    Int    @id(map: "PK__JEAttach__442C64DEDCA9E1A7") @default(autoincrement())
+  AttachmentPath  String @db.NVarChar(500)
+  AttachmentName  String @db.NVarChar(500)
+  TransactionCode String @db.NVarChar(20)
+  TransactionID   String @db.NVarChar(20)
+}
+
+model MasterCategories {
+  CategoryId    Int       @id(map: "PK_MasterCategories") @default(autoincrement())
+  Category_Name String?   @db.NVarChar(250)
+  Payee_Name    String?   @db.NVarChar(250)
+  Is_Active     Boolean?
+  Created_Date  DateTime? @db.DateTime
+  Priority      Int?      @default(0, map: "DEFAULT_MasterCategories_Priority")
+}
+
+model MayInstitutionTest {
+  Institution_Code Int     @id(map: "PK_InstitutionsTEST") @default(autoincrement())
+  Institution_Name String? @db.NVarChar(300)
+  Institution_ID   String? @db.VarChar(50)
+}
+
+model MenuItem {
+  Menu_Item_Code        Int          @id(map: "PK__MenuItem__956B9FF52D27B809") @default(autoincrement())
+  Menu_Item_Name        String?      @db.NVarChar(100)
+  Menu_URL              String?      @db.VarChar(100)
+  Parent_Menu_Item_Code Int?
+  Order                 Int?
+  Created_Date          DateTime?    @default(now(), map: "DF__MenuItem__Create__2F10007B") @db.DateTime
+  Is_Active             Boolean?     @default(true, map: "DF__MenuItem__Is_Act__300424B4")
+  UserId                Int?
+  Modified_Date         DateTime?    @db.DateTime
+  User_IP               String?      @db.VarChar(25)
+  Show_User             Boolean?
+  RoleAccess            RoleAccess[]
+}
+
+model Product {
+  Id                  Int       @id(map: "PK_Product") @default(autoincrement())
+  Product_Id          Int?
+  Product_Name        String?   @db.NVarChar(Max)
+  Handle              String?   @db.NVarChar(50)
+  Description         String?   @db.NVarChar(Max)
+  Price_In_Cents      Decimal?  @db.Decimal(18, 3)
+  Accounting_Code     String?   @db.NVarChar(50)
+  Return_URL          String?   @db.NVarChar(Max)
+  Require_Credit_Card Boolean?
+  Request_Credit_Card Boolean?
+  Created_Date        DateTime? @db.DateTime
+  Modified_Date       DateTime? @db.DateTime
+  Is_Active           Boolean?
+}
+
+model ProductFamily {
+  Product_Family_Id Int       @id(map: "PK_ProductFamily") @default(autoincrement())
+  Product_Id        Int?
+  Name              String?   @db.VarChar(200)
+  Handle            String?   @db.VarChar(100)
+  Accounting_Code   String?   @db.NVarChar(50)
+  Description       String?   @db.NVarChar(Max)
+  Created_Date      DateTime? @db.DateTime
+  Modified_Date     DateTime? @db.DateTime
+  Is_Active         Boolean?
+}
+
+model RoleAccess {
+  Role_Access_Code Int       @id(map: "PK__RoleAcce__70AF398C07020F21") @default(autoincrement())
+  RoleId           Int?
+  Menu_Item_Code   Int?
+  Has_Access       Boolean?
+  Created_Date     DateTime? @default(now(), map: "DF__RoleAcces__Creat__22AA2996") @db.DateTime
+  Is_Active        Boolean?  @default(true, map: "DF__RoleAcces__Is_Ac__239E4DCF")
+  UserId           Int?
+  Modified_Date    DateTime? @db.DateTime
+  User_IP          String?   @db.VarChar(25)
+  Is_Display       Boolean?
+  MenuItem         MenuItem? @relation(fields: [Menu_Item_Code], references: [Menu_Item_Code], onDelete: NoAction, onUpdate: NoAction, map: "FK_RoleAccess_MenuItem")
+  Roles            Roles?    @relation(fields: [RoleId], references: [RoleId], onDelete: NoAction, onUpdate: NoAction, map: "FK_RoleAccess_Roles")
+
+  @@index([Menu_Item_Code, RoleId], map: "nci_wi_RoleAccess_3DF50EE153E62B8077DEF53F6946F161")
+}
+
+model Roles {
+  RoleId        Int          @id(map: "PK__Roles__8AFACE1A0DAF0CB0") @default(autoincrement())
+  RoleName      String?      @db.VarChar(100)
+  Created_Date  DateTime?    @db.DateTime
+  Is_Internal   Boolean?
+  Is_Active     Boolean?
+  Modified_Date DateTime?    @db.DateTime
+  User_IP       String?      @db.VarChar(25)
+  ApplicationId Int?
+  Description   String?      @db.NVarChar(256)
+  UserId        Int?
+  RoleAccess    RoleAccess[]
+  Users         Users[]
+}
+
+model Session {
+  UpdateNo Int     @id(map: "Session$PrimaryKey") @default(autoincrement())
+  AllDone  Boolean
+}
+
+model Staff {
+  Staff_Id      Int       @id(map: "PK_Staff") @default(autoincrement())
+  UserName      String?   @db.NVarChar(50)
+  Email_Address String?   @db.VarChar(100)
+  Is_Active     Boolean?
+  Created_Date  DateTime? @db.DateTime
+  Modified_Date DateTime? @db.DateTime
+}
+
+model StatusRequest {
+  UpdateNo Int     @id(map: "MyTable$PrimaryKey") @default(autoincrement())
+  AllDone  Boolean @default(false, map: "DF__StatusReq__AllDo__0880433F")
+}
+
+model Subscription {
+  Id                        Int       @id(map: "PK_Subscription") @default(autoincrement())
+  UserId                    Int?
+  Subscription_Id           Int?
+  Transaction_Id            Int?
+  State                     String?   @db.VarChar(50)
+  Balance_In_Cents          Decimal?  @db.Decimal(18, 3)
+  Total_Revenue_In_Cents    Decimal?  @db.Decimal(18, 3)
+  Product_Price_In_Cents    Decimal?  @db.Decimal(18, 3)
+  Current_Period_Started_At DateTime?
+  Current_Period_Ends_At    DateTime?
+  Trial_Ended_At            DateTime?
+  Trial_Started_At          DateTime?
+  Expires_At                DateTime?
+  Coupon_Code               String?   @db.NVarChar(Max)
+  Is_Active                 Boolean?
+  Created_Date              DateTime? @db.DateTime
+  Modified_Date             DateTime? @db.DateTime
+  ClientSubscription_ID     Int?
+  Users                     Users?    @relation(fields: [UserId], references: [UserId], onDelete: NoAction, onUpdate: NoAction, map: "FK_Subscription_Users")
+}
+
+model TaxStatus {
+  serialno                     Int     @id(map: "PK__TaxStatu__D1DBDCABD8E7C976") @default(autoincrement())
+  FileName                     String? @db.NVarChar(Max)
+  FilingStatusDropDown         String? @db.VarChar(50)
+  DependentsDD                 Int?
+  DependentsUnder18DD          Int?
+  WagesInput                   Int?
+  InterestInput                Int?
+  DividendsInput               Int?
+  TaxableRefundsInput          Int?
+  BusinessIncome               Int?
+  CapitalGainInput             Int?
+  IRADistributionsInput        Int?
+  RentalPropertyInput          Int?
+  UnemploymentIncome           Int?
+  SocialSecurityInput          Int?
+  OtherIncome                  Int?
+  HealthSavingsInput           Int?
+  SESEPInput                   Int?
+  SEHIINput                    Int?
+  IRAContInput                 Int?
+  StudentLoanInput             Int?
+  TutionInput                  Int?
+  MedicalExpenseInput          Int?
+  StateTaxInput                Int?
+  PropertyTaxInput             Int?
+  AutoLicenseInput             Int?
+  MortgageInterestInput        Int?
+  CharitableInput              Int?
+  NonCashInput                 Int?
+  OtherInput                   Int?
+  AlternativeMinimumTaxInput   Int?
+  ChildCareInput               Int?
+  EducationInput               Int?
+  ResidentialEnergyCreditInput Int?
+  FederalIncomeInput           Int?
+  EstimatedTaxInput            Int?
+  TaxExtensionInput            Int?
+  SSETIInput                   Int?
+  OtherPaymentInput            Int?
+  OverPaymentInput             Int?
+  UserKey                      Int?
+  SpouseWagesInput             Int?
+  OtherBizIncome               Int?
+  HomeMortInterest             Int?
+  MedicalAndDental             Int?
+  EOISO                        Int?
+  DoB                          Int?
+  DoP                          Int?
+  InvestInt                    Int?
+  WagesTaxableSocial           Int?
+  SWagesTaxableSocial          Int?
+  TaxableSocialSecurity        Int?
+  STaxableSocialSecurity       Int?
+  LimitedPartOther             Int?
+  NetGainProp                  Int?
+  InvestIntItem                Int?
+  AdjuToMedi                   Int?
+  StateLocalTax                Int?
+}
+
+model TemplateMaster {
+  TemplateId         Int     @id(map: "PK_TemplateMaster") @default(autoincrement())
+  TemplateName       String? @db.VarChar(50)
+  TemplateContent    String? @db.VarChar(Max)
+  UserClientId       Int?
+  CustomTemplateName String? @db.NVarChar(50)
+}
+
+model UncategorizedEntries {
+  Transaction_Code           Int       @id(map: "PK_UncategorizedEntries") @default(autoincrement())
+  Account_Code               Int?
+  Transaction_ID             String    @db.VarChar(50)
+  Institution_Transaction_ID String?   @db.VarChar(100)
+  Account_ID                 String?   @db.VarChar(50)
+  Amount                     Decimal?  @db.Decimal(10, 2)
+  Currency                   String?   @db.VarChar(50)
+  Memo                       String?
+  Payee_Name                 String?   @db.VarChar(200)
+  Posted_Date                DateTime? @db.DateTime
+  Ref_Number                 String?   @db.VarChar(100)
+  Created_Date               DateTime? @db.DateTime
+  Is_Active                  Boolean?
+  Is_Approve                 Boolean?
+  Category_Name              String?   @db.VarChar(100)
+  scheduleC                  String?   @db.VarChar(Max)
+  UserId                     Int?
+  NormalizedPayeeName        String?   @db.VarChar(200)
+  Source                     String?   @db.VarChar(100)
+  TransactionType            String?   @db.VarChar(100)
+  Pending                    Boolean?
+  CheckNumber                String?   @db.VarChar(100)
+  CorrectAction              String?   @db.VarChar(100)
+  Accounts                   Accounts? @relation(fields: [Account_Code], references: [Account_Code], onDelete: NoAction, onUpdate: NoAction, map: "FK_UncategorizedEntries_Accounts")
+  Users                      Users?    @relation(fields: [UserId], references: [UserId], onDelete: NoAction, onUpdate: NoAction, map: "FK_UncategorizedEntries_Users")
+}
+
+model Users {
+  UserId                                      Int                               @id(map: "PK__User__3E6D1F351273C1CD") @default(autoincrement())
+  Client_Id                                   Int?
+  Customer_Id                                 Int?
+  First_Name                                  String?                           @db.VarChar(50)
+  Last_Name                                   String?                           @db.VarChar(50)
+  Full_Name                                   String?                           @db.VarChar(150)
+  UserName                                    String?                           @db.NVarChar(50)
+  Email_Address                               String?                           @db.VarChar(100)
+  Password                                    String?                           @db.VarChar(100)
+  Password_Normal                             String?                           @db.VarChar(100)
+  City                                        String?                           @db.VarChar(50)
+  State                                       String?                           @db.VarChar(50)
+  Zip                                         String?                           @db.NVarChar(50)
+  Country_Code                                Int?
+  Address                                     String?                           @db.NVarChar(Max)
+  Phone1                                      String?                           @db.VarChar(100)
+  User_IP                                     String?                           @db.VarChar(50)
+  ApplicationIdOrig                           Int?
+  Company_Name                                String?                           @db.NVarChar(Max)
+  Created_Date                                DateTime?                         @db.DateTime
+  Exp_Year                                    String?                           @db.NVarChar(10)
+  PackageID                                   String?                           @db.VarChar(25)
+  RoleId                                      Int?
+  Aweber_Subscriber_Id                        BigInt?
+  Attempt_Count                               Int?
+  Attempt_Datetime                            DateTime?                         @db.DateTime
+  Is_Admin                                    Boolean?
+  Is_Customer                                 Boolean?
+  Is_Employee                                 Boolean?
+  Is_Staff                                    Boolean?
+  Is_Payroll                                  Boolean?
+  Is_Verified                                 Boolean?
+  Is_Locked                                   Boolean?                          @default(false, map: "DF_Users_Is_Locked")
+  Is_Paid                                     Boolean?
+  Is_Expired                                  Boolean?
+  Is_Active                                   Boolean?
+  Can_Add_JE                                  Boolean?
+  Can_Edit_JE                                 Boolean?
+  Can_Delete_JE                               Boolean?
+  Can_Edit_ExpAct                             Boolean?
+  Can_Edit_Blnc_Sht                           Boolean?
+  Can_Add_Blnc_Sht_Act_Titles                 Boolean?
+  Can_Edit_Blnc_Sht_Act_Titles                Boolean?
+  Can_Delete_Blnc_Sht_Act_Titles              Boolean?
+  Can_Delete_Entries                          Boolean?
+  Modified_Date                               DateTime?                         @db.DateTime
+  Can_Add_MT                                  Boolean?
+  Can_Edit_Tran_Cat                           Boolean?
+  Can_Delete_Income_Titles                    Boolean?
+  Can_Add_Income_Titles                       Boolean?
+  FileCount                                   Int?
+  firstlogin                                  Boolean?
+  ChargifyId                                  String?                           @db.VarChar(50)
+  TotalClient                                 Int?
+  PCity                                       String?                           @db.VarChar(50)
+  PState                                      String?                           @db.VarChar(50)
+  PZip                                        String?                           @db.NVarChar(50)
+  PCountry_Code                               Int?
+  PAddress                                    String?                           @db.NVarChar(Max)
+  Is_SubUser                                  Boolean?
+  CustomerProfileID                           String?                           @db.VarChar(50)
+  Can_Send_Financial_Statements               Boolean?                          @default(true, map: "DF__Users__Can_Send___37C5420D")
+  Can_Add_Custom_Category                     Boolean?                          @default(true, map: "DF__Users__Can_Add_C__38B96646")
+  Can_Edit_Custom_Category                    Boolean?                          @default(true, map: "DF__Users__Can_Edit___39AD8A7F")
+  Can_Delete_Custom_Category                  Boolean?                          @default(true, map: "DF__Users__Can_Delet__3AA1AEB8")
+  ApplicationId                               String?                           @db.VarChar(50)
+  CsvImportPermissionCode                     String?                           @db.VarChar(50)
+  Email_Alias                                 String?                           @db.VarChar(200)
+  Accounts                                    Accounts[]
+  AccountTransactionUpdateHistory             AccountTransactionUpdateHistory[]
+  Class                                       Class[]
+  ClassRule                                   ClassRule[]
+  EasyEdits_EasyEdits_AccountantUserIdToUsers EasyEdits[]                       @relation("EasyEdits_AccountantUserIdToUsers")
+  EasyEdits_EasyEdits_ClientUserIdToUsers     EasyEdits[]                       @relation("EasyEdits_ClientUserIdToUsers")
+  Subscription                                Subscription[]
+  UncategorizedEntries                        UncategorizedEntries[]
+  Client                                      Client?                           @relation(fields: [Client_Id], references: [Client_Id], onDelete: NoAction, onUpdate: NoAction, map: "FK_Users_Client")
+  Country                                     Country?                          @relation(fields: [Country_Code], references: [Country_Code], onDelete: NoAction, onUpdate: NoAction, map: "FK_Users_Country")
+  Customer                                    Customer?                         @relation(fields: [Customer_Id], references: [Customer_Id], onDelete: NoAction, onUpdate: NoAction, map: "FK_Users_Customer")
+  Roles                                       Roles?                            @relation(fields: [RoleId], references: [RoleId], onDelete: NoAction, onUpdate: NoAction, map: "FK_Users_Roles")
+  Users                                       Users                             @relation("UsersToUsers", fields: [UserId], references: [UserId], onUpdate: NoAction, map: "FK_Users_Users")
+  other_Users                                 Users?                            @relation("UsersToUsers")
+}
