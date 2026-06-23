@@ -39,6 +39,13 @@ export function Sidebar() {
     return () => window.removeEventListener("keydown", onKey);
   }, [r.canSwitchClient]);
 
+  // Once the live client list loads, if the current selection isn't a real
+  // client (initial state holds a mock id), default to the first real client.
+  useEffect(() => {
+    if (!isStaff || !apiClients || apiClients.length === 0) return;
+    if (!apiClients.some((c) => c.id === clientId)) setClientId(apiClients[0].id);
+  }, [isStaff, apiClients, clientId, setClientId]);
+
   // Display the live-selected client; fall back to mock CLIENTS for initial load / non-staff.
   const selected = apiClients?.find((c) => c.id === clientId);
   const localClient = CLIENTS.find((c) => c.id === clientId) ?? CLIENTS[0];
