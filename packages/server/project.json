@@ -1,0 +1,15 @@
+{
+  "name": "server",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/server/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:server"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vite:test",
+      "options": {
+        "config": "packages/server/vite.config.ts"
+      }
+    }
+  }
+}

@@ -19,6 +19,7 @@
       "@accounting-completed/ui": ["packages/ui/src/index.ts"],
       "@accounting-completed/contracts": ["packages/contracts/src/index.ts"],
       "@accounting-completed/db": ["packages/db/src/index.ts"],
+      "@accounting-completed/server": ["packages/server/src/index.ts"],
       "@accounting-completed/utils": ["packages/utils/src/index.ts"],
       "ui": ["packages/ui/src/index.ts"]
     }
