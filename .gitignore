@@ -22,3 +22,4 @@ packages/db/generated/
 # subagent-driven-development controller scratch
 .superpowers/
 tmp/
+.gstack/
