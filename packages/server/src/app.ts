@@ -5,7 +5,12 @@ import { onError } from "./middleware/error";
 
 export const app = new Hono();
 
-app.use("*", cors({ origin: (o) => o, credentials: true }));
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+app.use("*", cors({
+  origin: (origin) => (ALLOWED_ORIGINS.includes(origin) ? origin : null),
+  allowHeaders: ["Content-Type", "Authorization"],
+  allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+}));
 app.use("*", async (c, next) => {
   const t = Date.now();
   await next();
