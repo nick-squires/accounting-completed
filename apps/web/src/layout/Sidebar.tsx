@@ -20,7 +20,7 @@ export function Sidebar({ onClientClick }: SidebarProps) {
 
   const { data: me } = useMe();
   const isStaff = me?.roles?.isStaff ?? false;
-  const { data: apiClients, isLoading: clientsLoading } = useClients();
+  const { data: apiClients, isLoading: clientsLoading } = useClients({ enabled: isStaff });
 
   return (
     <aside className="w-[240px] flex flex-col bg-sidebar border-r border-sidebar-border overflow-hidden">

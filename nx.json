@@ -14,17 +14,18 @@
   "targetDefaults": {
     "build": {
       "cache": true,
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build", "^prisma-generate"]
     },
     "lint": {
       "cache": true
     },
     "test": {
-      "cache": true
+      "cache": true,
+      "dependsOn": ["^prisma-generate"]
     },
     "@nx/esbuild:esbuild": {
       "cache": true,
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "^prisma-generate"],
       "inputs": ["production", "^production"]
     },
     "prisma-generate": {
