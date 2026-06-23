@@ -17,7 +17,7 @@ The bar is **functional fidelity to the legacy page**, not pixel fidelity to eit
 - **Data is produced by existing stored procedures** in the existing Azure SQL database (no schema changes):
   - `QBAutomation_ProfitLoss_TEST(userId, startDate, endDate)` → per-account rows with monthly values (Jan–Dec), weekly columns, current-month total, yearly total. Columns include `Account_ID, Account_Code, Account_Name, Account_Category, Type, Jan…Dec, Current_Month_Total, Yearly_Total`.
   - `QBAutomation_ProfitLoss_MonthlySum_TEST(userId, startDate, endDate)` → section totals (income, expenses, gross profit, net income) by month + YTD.
-- **Connection string:** present in `MyAccountantsCloud/Web.config` → `DefaultConnection`, DB `brandedcloudaccountingtest` on `brandedcloudaccounting.database.windows.net` (Azure SQL). Used read-only. The developer confirms the DB is reachable from the dev environment.
+- **Connection (verified 2026-06-22):** working credentials are in `MyAccountantsCloud/MacApi/Web.config` → `DefaultConnection` — DB `brandedcloudaccountingtest_shelby3` on `brandedcloudaccounting.database.windows.net` (Azure SQL), user `application_login_prod`. The legacy WebForms `BrandedCloudAccountingWebsite/Web.config` creds are stale (`ELOGIN`). Used read-only; network/firewall is open from the dev machine. Both procs take `@UserId int, @DateFrom date, @DateTo date`. Demo client `UserId 2189`, FY 2025; demo firm `Client_Id 69`.
 - **Accounting sign convention:** income accounts are stored negated (credit = negative) in the legacy data; the service normalizes signs so income is presented positive (matches `Profit_Loss.aspx.cs` `* -1` handling).
 
 ## 3. Locked decisions
@@ -106,7 +106,7 @@ Response: an `IncomeStatement` —
 ## 8. Income statement feature scope
 
 **In scope (functional, live-data):**
-- Active client (from existing client context) + start/end date range control.
+- **Real client picker** on the page, populated by a live clients-list endpoint (firm `Client_Id 69`), + start/end date range control.
 - 12-month trend table: account rows grouped by section, section subtotals, **Gross Profit** (accent), **Net Income** (double-rule), YTD column, **% of income** column.
 - Number formatting via `@accounting-completed/utils` `fmt`/`fmtPct` (zero → "—", negatives in parens, tabular nums); future/current-month styling.
 - KPI tiles: Total income · Total expenses · Gross profit · Net income (YTD).

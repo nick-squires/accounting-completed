@@ -16,7 +16,7 @@
 - **No committed secrets.** DB credentials live in a git-ignored `.env`; `.env.example` documents the variable names only.
 - **Module boundaries (Nx tags):** `scope:db`→[], `scope:contracts`→[], `scope:api-client`→`scope:contracts`, `apps/api` (`scope:api`)→`scope:db`,`scope:contracts`, `apps/web`→adds `scope:api-client`. `apps/web` MUST NOT import `apps/api` or `packages/db`.
 - **Income sign convention:** rows whose proc `Type` is `Income` or `Other Income` are stored negative; the service multiplies them by `-1` so income presents positive (mirrors `Profit_Loss.aspx.cs`). Expense/COGS rows are used as-is. Monthly-sum proc rows are already correctly signed — do NOT flip them.
-- **Legacy source of truth:** `MyAccountantsCloud/BrandedCloudAccountingWebsite/Pages/Reports/Profit_Loss.aspx.cs` and the two `QBAutomation_ProfitLoss*` procs. Connection string is in `MyAccountantsCloud/Web.config` (`DefaultConnection`, DB `brandedcloudaccountingtest`).
+- **Legacy source of truth:** `MyAccountantsCloud/BrandedCloudAccountingWebsite/Pages/Reports/Profit_Loss.aspx.cs` and the two `QBAutomation_ProfitLoss*` procs. **Working DB credentials are in `MyAccountantsCloud/MacApi/Web.config` `DefaultConnection`** — DB `brandedcloudaccountingtest_shelby3`, user `application_login_prod`. (The WebForms `BrandedCloudAccountingWebsite/Web.config` creds are STALE → `ELOGIN`; do not use them.) Both procs take `@UserId int, @DateFrom date, @DateTo date`. Demo client: `UserId 2189` ("Dr. Reuben Montemagni, A Chiropractic Corporation"), FY 2025; demo firm `Client_Id 69`. (Verified via connectivity spike, 2026-06-22.)
 - **Feature bar:** functional fidelity to the legacy income statement; not pixel fidelity.
 
 ---
@@ -100,7 +100,7 @@ Expected: all added; `pnpm-lock.yaml` updated. (Floors only; take newer stable a
 
 - [ ] **Step 2: Add `.env` and `.env.example`** (creds copied from `MyAccountantsCloud/Web.config` `DefaultConnection`)
 
-`.env` — copy the real values from `MyAccountantsCloud/Web.config` → `connectionStrings` → `DefaultConnection` (`Server`, `Database`, `User ID`, `password`). **Never commit this file or the literal credentials.**
+`.env` — copy the real values from `MyAccountantsCloud/MacApi/Web.config` → `connectionStrings` → `DefaultConnection` (`Server`, `Database`, `User ID`, `password`). The DB is `brandedcloudaccountingtest_shelby3`. (The WebForms `BrandedCloudAccountingWebsite/Web.config` creds are stale — `ELOGIN`.) **Never commit this file or the literal credentials.**
 ```
 MAC_DB_SERVER=<server host from Web.config, e.g. ...database.windows.net>
 MAC_DB_PORT=1433
@@ -158,8 +158,8 @@ const end = "12/31/2025";
 
 const rows = await pool.request()
   .input("UserId", mssql.Int, userId)
-  .input("StartDate", mssql.DateTime, new Date(start))
-  .input("EndDate", mssql.DateTime, new Date(end))
+  .input("DateFrom", mssql.Date, new Date(start))
+  .input("DateTo", mssql.Date, new Date(end))
   .execute("QBAutomation_ProfitLoss_TEST");
 console.log("PROFITLOSS COLUMNS:", Object.keys(rows.recordset[0] ?? {}));
 console.log("PROFITLOSS TYPES:", [...new Set(rows.recordset.map(r => (r.Type ?? "").trim()))]);
@@ -167,8 +167,8 @@ console.log("PROFITLOSS SAMPLE:", JSON.stringify(rows.recordset.slice(0, 3), nul
 
 const sums = await pool.request()
   .input("UserId", mssql.Int, userId)
-  .input("StartDate", mssql.DateTime, new Date(start))
-  .input("EndDate", mssql.DateTime, new Date(end))
+  .input("DateFrom", mssql.Date, new Date(start))
+  .input("DateTo", mssql.Date, new Date(end))
   .execute("QBAutomation_ProfitLoss_MonthlySum_TEST");
 console.log("MONTHLYSUM COLUMNS:", Object.keys(sums.recordset[0] ?? {}));
 console.log("MONTHLYSUM TYPES:", [...new Set(sums.recordset.map(r => (r.Type ?? "").trim()))]);
@@ -183,7 +183,7 @@ Note: `pnpm add -Dw dotenv` if not already present.
 Run: `node scripts/spike-proc.mjs`
 Expected: prints a list of users, the two procs' exact column names, the set of `Type` values, and sample rows.
 - If it errors with a firewall/login message: the dev IP is not whitelisted on Azure SQL — whitelist it (Azure portal → SQL server → Networking) and re-run before continuing.
-- Pick a `userId` whose proc output has non-zero account rows; that is the **demo client** for later tasks.
+- Pick a `userId` whose proc output has non-zero account rows; that is the **demo client** for later tasks. (Confirmed by the 2026-06-22 spike: `UserId 2189`, FY 2025.)
 
 - [ ] **Step 6: Record findings**
 
@@ -284,8 +284,8 @@ async function execProc<T>(name: string, userId: number, startDate: Date, endDat
   const pool = await getPool();
   const result = await pool.request()
     .input("UserId", sql.Int, userId)
-    .input("StartDate", sql.DateTime, startDate)
-    .input("EndDate", sql.DateTime, endDate)
+    .input("DateFrom", sql.Date, startDate)
+    .input("DateTo", sql.Date, endDate)
     .execute<T>(name);
   return result.recordset;
 }
@@ -337,7 +337,7 @@ describe.skipIf(!DEMO_USER_ID)("income-statement procs (integration)", () => {
   });
 });
 ```
-Add `MAC_DEMO_USER_ID=<chosen id>` to `.env`.
+Add `MAC_DEMO_USER_ID=2189` to `.env`.
 
 - [ ] **Step 5: Run the integration test**
 
@@ -1014,6 +1014,131 @@ git commit -m "feat(web): add react-query provider + /api dev proxy"
 
 ---
 
+### Task 8.5: Real clients list (db query → contract → route → hook)
+
+Establishes the same vertical pattern for a plain `SELECT` (not a stored proc), and gives the page a real client picker. Scoped to a firm via `Client_Id` (no auth yet; default firm `69`).
+
+**Files:**
+- Create: `packages/db/src/clients.ts`; modify `packages/db/src/index.ts`
+- Create: `packages/contracts/src/clients.ts`; modify `packages/contracts/src/index.ts`
+- Create: `apps/api/src/clients/route.ts`, `apps/api/src/clients/route.spec.ts`; modify `apps/api/src/app.ts`
+- Create: `packages/api-client/src/clients.ts`; modify `packages/api-client/src/index.ts`
+
+**Interfaces:**
+- Produces:
+  - db: `fetchClients(firmClientId: number): Promise<ClientRow[]>`, `ClientRow = { UserId: number; Company_Name: string | null; Full_Name: string }`.
+  - contracts: `clientsResponseSchema` + `type ClientSummary = { id: string; name: string }`.
+  - api: `GET /api/clients?firmClientId=69` → `ClientSummary[]`; factory `createClientsRoute(list?)`.
+  - api-client: `fetchClients(firmClientId?, baseUrl?)`, `useClients(firmClientId?)`.
+
+- [ ] **Step 1: db query** — `packages/db/src/clients.ts`:
+```ts
+import sql from "mssql";
+import { getPool } from "./pool";
+
+export interface ClientRow { UserId: number; Company_Name: string | null; Full_Name: string; }
+
+export async function fetchClients(firmClientId: number): Promise<ClientRow[]> {
+  const pool = await getPool();
+  const result = await pool.request()
+    .input("ClientId", sql.Int, firmClientId)
+    .query<ClientRow>(
+      "SELECT UserId, Company_Name, Full_Name FROM Users WHERE Client_Id = @ClientId AND Is_Customer = 1 AND Is_Active = 1 AND Is_Locked = 0 ORDER BY Company_Name, Full_Name"
+    );
+  return result.recordset;
+}
+```
+Add to `packages/db/src/index.ts`: `export * from "./clients";`
+
+- [ ] **Step 2: contract** — `packages/contracts/src/clients.ts`:
+```ts
+import { z } from "zod";
+export const clientSummarySchema = z.object({ id: z.string(), name: z.string() });
+export const clientsResponseSchema = z.array(clientSummarySchema);
+export type ClientSummary = z.infer<typeof clientSummarySchema>;
+```
+Add to `packages/contracts/src/index.ts`: `export * from "./clients";`
+
+- [ ] **Step 3: route + failing test** — `apps/api/src/clients/route.ts`:
+```ts
+import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
+import { clientsResponseSchema } from "@accounting-completed/contracts";
+import { fetchClients, type ClientRow } from "@accounting-completed/db";
+
+const querySchema = z.object({ firmClientId: z.coerce.number().int().default(69) });
+type ListClients = (firmClientId: number) => Promise<ClientRow[]>;
+
+export function createClientsRoute(list: ListClients = fetchClients) {
+  return new Hono().get("/", zValidator("query", querySchema), async (c) => {
+    const { firmClientId } = c.req.valid("query");
+    const rows = await list(firmClientId);
+    const clients = rows.map((r) => ({ id: String(r.UserId), name: (r.Company_Name?.trim() || r.Full_Name) }));
+    return c.json(clientsResponseSchema.parse(clients));
+  });
+}
+```
+`apps/api/src/clients/route.spec.ts`:
+```ts
+import { describe, expect, it } from "vitest";
+import { Hono } from "hono";
+import { createClientsRoute } from "./route";
+
+const app = new Hono().route("/api/clients", createClientsRoute(async () => [
+  { UserId: 2189, Company_Name: "Dr. Reuben Montemagni, A Chiropractic Corporation", Full_Name: "Montemagni" },
+  { UserId: 2243, Company_Name: "", Full_Name: "Amos, Jim" },
+]));
+
+describe("GET /api/clients", () => {
+  it("maps rows to {id,name}, falling back to full name when company is blank", async () => {
+    const res = await app.request("/api/clients?firmClientId=69");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body[0]).toEqual({ id: "2189", name: "Dr. Reuben Montemagni, A Chiropractic Corporation" });
+    expect(body[1]).toEqual({ id: "2243", name: "Amos, Jim" });
+  });
+});
+```
+Run `pnpm exec nx run api:test` → fails (no `./route`), then passes after the file exists.
+
+- [ ] **Step 4: mount** in `apps/api/src/app.ts`:
+```ts
+import { createClientsRoute } from "./clients/route";
+// after the income-statement route:
+app.route("/api/clients", createClientsRoute());
+```
+
+- [ ] **Step 5: api-client hook** — `packages/api-client/src/clients.ts`:
+```ts
+import { useQuery } from "@tanstack/react-query";
+import { clientsResponseSchema, type ClientSummary } from "@accounting-completed/contracts";
+
+const BASE = (import.meta as { env?: Record<string, string> }).env?.VITE_API_BASE_URL ?? "";
+
+export async function fetchClients(firmClientId = 69, baseUrl = BASE): Promise<ClientSummary[]> {
+  const res = await fetch(`${baseUrl}/api/clients?firmClientId=${firmClientId}`);
+  if (!res.ok) throw new Error(`Clients request failed: ${res.status}`);
+  return clientsResponseSchema.parse(await res.json());
+}
+
+export function useClients(firmClientId = 69) {
+  return useQuery({ queryKey: ["clients", firmClientId], queryFn: () => fetchClients(firmClientId) });
+}
+```
+Add to `packages/api-client/src/index.ts`: `export * from "./clients";`
+
+- [ ] **Step 6: run + commit**
+
+Run: `pnpm exec nx run-many -t test --projects=api,contracts,api-client`
+Expected: PASS.
+```bash
+git add packages/db packages/contracts apps/api packages/api-client
+git commit -m "feat: real clients list (db select -> contract -> route -> hook)"
+```
+
+---
+
 ### Task 9: Build `ProfitLossPage` (KPI tiles + trend table + states) and wire the route
 
 **Files:**
@@ -1022,7 +1147,7 @@ git commit -m "feat(web): add react-query provider + /api dev proxy"
 - Delete: `Profit & Loss.html`
 
 **Interfaces:**
-- Consumes: `useIncomeStatement` from `@accounting-completed/api-client`; `useClient` from `../../app/client-context`; `CLIENTS` from `@accounting-completed/domain`; `Card`, `CardHeader`, `CardTitle`, `CardFooter`, `Button` from `@accounting-completed/ui`; `fmt`, `fmtPct` from `@accounting-completed/utils`; `ICONS` from `../../layout/icons`; `PageHeader` from `../../components/PageHeader`.
+- Consumes: `useIncomeStatement`, `useClients` from `@accounting-completed/api-client`; `Card`, `CardHeader`, `CardTitle`, `CardFooter`, `Button`, `Input` from `@accounting-completed/ui`; `fmt`, `fmtPct` from `@accounting-completed/utils`; `ICONS` from `../../layout/icons`; `PageHeader` from `../../components/PageHeader`.
 - Produces: `ProfitLossPage` rendered at `/reports/profit-loss`.
 
 - [ ] **Step 1: Add scoped table CSS**
@@ -1150,9 +1275,8 @@ Note: `cn` must be exported from `@accounting-completed/utils` (it is). Keep the
 `apps/web/src/routes/profit-loss/ProfitLossPage.tsx`:
 ```tsx
 import { useState } from "react";
-import { useIncomeStatement } from "@accounting-completed/api-client";
+import { useIncomeStatement, useClients } from "@accounting-completed/api-client";
 import { Card, CardHeader, CardTitle, CardFooter, Button, Input } from "@accounting-completed/ui";
-import { useClient } from "../../app/client-context";
 import { ICONS } from "../../layout/icons";
 import { PageHeader } from "../../components/PageHeader";
 import { Kpi } from "./Kpi";
@@ -1161,10 +1285,12 @@ import { PLTable } from "./PLTable";
 const usd = (n: number) => Math.round(n).toLocaleString("en-US");
 
 export function ProfitLossPage() {
-  const { clientId } = useClient();
+  const { data: clients } = useClients();
+  const [clientId, setClientId] = useState("2189"); // demo client (Montemagni); switcher below lists real firm clients
   const [startDate, setStartDate] = useState("2025-01-01");
   const [endDate, setEndDate] = useState("2025-12-31");
   const query = useIncomeStatement({ clientId, startDate, endDate });
+  const clientName = clients?.find((c) => c.id === clientId)?.name ?? query.data?.client.name ?? "…";
 
   const totals = query.data
     ? {
@@ -1179,9 +1305,12 @@ export function ProfitLossPage() {
     <div>
       <PageHeader
         title="Income statement trend analysis"
-        sub={query.data ? `${query.data.client.name} · ${startDate} → ${endDate}` : "Loading…"}
+        sub={`${clientName} · ${startDate} → ${endDate}`}
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            <select value={clientId} onChange={(e) => setClientId(e.target.value)} className="h-8 rounded-md border border-border bg-card px-2 text-[13px]">
+              {(clients ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
             <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-[150px]" />
             <span className="text-text-soft">→</span>
             <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-[150px]" />
@@ -1215,7 +1344,7 @@ export function ProfitLossPage() {
   );
 }
 ```
-Note: `clientId` from context is the demo client's UserId string. Ensure `CLIENTS[0].id` (the default) maps to a valid `userId`; if the existing `CLIENTS` ids are not real UserIds, set the default `startDate`/`endDate`/client to the demo values from the Task 1 notes for this slice (a follow-up will wire the real client switcher).
+Note: the page owns client selection via `useClients` (real DB clients for firm `69`), defaulting `clientId` to demo client `2189`. The global Sidebar client switcher still uses mock domain `CLIENTS`; rewiring it to real clients is deferred (Follow-on #5).
 
 - [ ] **Step 5: Write the page test (MSW)**
 
@@ -1226,7 +1355,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
-import { ClientContext } from "../../app/client-context";
 import { ProfitLossPage } from "./ProfitLossPage";
 
 const sample = {
@@ -1237,7 +1365,10 @@ const sample = {
   netIncome: { vals: [1000,0,0,0,0,0,0,0,0,0,0,0], ytd: 1000 },
   meta: { basis: "accrual", currency: "USD", lastRefreshed: "2026-06-22T00:00:00.000Z" },
 };
-const server = setupServer(http.get("*/api/income-statement", () => HttpResponse.json(sample)));
+const server = setupServer(
+  http.get("*/api/clients", () => HttpResponse.json([{ id: "2189", name: "Atlas Coffee" }])),
+  http.get("*/api/income-statement", () => HttpResponse.json(sample)),
+);
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
@@ -1246,9 +1377,7 @@ function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <ClientContext.Provider value={{ clientId: "1", setClientId: () => {} }}>
-        <ProfitLossPage />
-      </ClientContext.Provider>
+      <ProfitLossPage />
     </QueryClientProvider>
   );
 }
@@ -1339,7 +1468,7 @@ Deferred legacy features, each its own plan, reusing the layers established here
 2. **Comparison columns** — prior period / prior year, $ and % change (the legacy `GetProfitLossStatement` shape).
 3. **Footnotes/notes** — DB-backed `FootNotes` (first WRITE path — revisit the read-only constraint).
 4. **Export + print route** — CSV/Excel + `/reports/profit-loss/print`.
-5. **Real client switcher + auth** — map the client context to real `UserId`s; the demo default is a stopgap.
+5. **Global client switcher + auth** — the income statement page now lists real clients (firm `69`); rewire the Sidebar/`ClientContext` switcher to real clients app-wide, and add real auth/session (currently none; firm id is hardcoded).
 
 ## Self-Review notes
 
