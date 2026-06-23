@@ -4,7 +4,8 @@ import { logger as pinoLogger } from "./logger";
 import { onError } from "./middleware/error";
 import { requestContext } from "./middleware/request-context";
 import { createAuthRoutes } from "./auth/routes";
-import { usersRepository } from "@accounting-completed/db";
+import { createClientsRoutes } from "./clients/routes";
+import { clientsRepository, usersRepository } from "@accounting-completed/db";
 
 export const app = new Hono();
 
@@ -22,6 +23,7 @@ app.use("*", async (c, next) => {
 app.onError(onError);
 app.use("*", requestContext);
 app.route("/api/auth", createAuthRoutes({ findByUsername: usersRepository.findByUsername }));
+app.route("/api/clients", createClientsRoutes({ list: clientsRepository.list }));
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 export type AppType = typeof app;
