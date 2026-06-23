@@ -1,4 +1,6 @@
-# Income Statement Vertical Slice Implementation Plan
+# Income Statement Page Implementation Plan — DEFERRED
+
+> ⚠️ **DEFERRED / NOT THE CURRENT PLAN.** Scope was narrowed to the backend + data foundation only (see `docs/superpowers/specs/2026-06-22-backend-data-foundation-design.md`). The income-statement *page* is parked until the foundation lands. This file is kept for its still-valuable research — the legacy `QBAutomation_ProfitLoss*` proc mapping, sign convention, and section/totals logic. **Do NOT execute as-is:** its data layer predates the Prisma decision (it uses raw `mssql`), so its db/contracts/api tasks are superseded by the foundation plan. Revisit and rewrite the page-specific parts on top of the foundation when we build the income statement.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
