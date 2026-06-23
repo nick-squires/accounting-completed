@@ -15,7 +15,7 @@ const adapter = new PrismaMssql({
   user: process.env.MAC_DB_USER!,
   password: process.env.MAC_DB_PASSWORD!,
   pool: { max: 10, min: 0, idleTimeoutMillis: 30000 },
-  options: { encrypt: process.env.MAC_DB_ENCRYPT !== "false", trustServerCertificate: true },
+  options: { encrypt: process.env.MAC_DB_ENCRYPT !== "false", trustServerCertificate: process.env.MAC_DB_TRUST_CERT === "true" },
 });
 
 export const prisma = new PrismaClient({ adapter });
