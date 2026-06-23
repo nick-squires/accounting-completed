@@ -11,3 +11,8 @@ playwright-report
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+
+# Environment variables — never commit real secrets
+.env
+.env.local
+.env.*.local
