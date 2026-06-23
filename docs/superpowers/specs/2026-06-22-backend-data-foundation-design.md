@@ -34,6 +34,8 @@ The bar is **foundation-grade on every layer** — not a minimum slice.
 | Frontend data layer | **React Query** hooks in `packages/api-client`, built on the Hono RPC client + contract validation |
 | Proving consumer | **Clients list** end-to-end, wired into the real Sidebar/`ClientContext` switcher (replacing mock `CLIENTS`) |
 | Auth | **First-party credentials**, verified against existing `Users`; signed JWT in an httpOnly cookie (see §3a) |
+| Authorization | **Omitted in the first pass** — authenticate + derive firm from session for data-scoping, but no role/permission gating yet |
+| Hosting | **Azure App Service** (long-lived Node host; single Prisma connection pool) |
 | Scope | **Foundation only.** Income-statement page deferred. |
 
 ## 3a. Authentication & session (decided)
@@ -98,7 +100,7 @@ New Nx scope tags + `enforce-module-boundaries` constraints: `scope:db`→[], `s
 These are deliberately **not** decided yet — they shape the foundation and need discussion:
 
 1. ~~Auth / identity / session~~ — **DECIDED, see §3a** (first-party credentials → MD5-verify against `Users` → signed JWT in an httpOnly cookie; firm/roles from the `Users` row).
-2. **Authorization depth / multi-tenancy** — still open: how granular to enforce role-based access (legacy `RoleAccess` menu permissions) now vs. later, and confirming every query is scoped to the caller's firm/clients via `requestContext`.
+2. ~~Authorization depth / multi-tenancy~~ — **DECIDED: omitted in the first pass.** Authenticate and derive the firm from the session for data-scoping; no `RoleAccess` role/permission enforcement yet (revisit when a feature needs it).
 3. **API error contract** — standard error shape, status mapping, validation-error format.
 4. **Logging / observability** — structured logs, request logging, error tracking, correlation Ids.
 5. **Config & secrets management** — env validation (zod), dev/prod split, secret storage (Key Vault?).
