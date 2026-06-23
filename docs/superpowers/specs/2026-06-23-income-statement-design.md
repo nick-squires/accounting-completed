@@ -15,7 +15,7 @@ Rebuild the legacy Income Statement (Profit & Loss) as a working full-stack vert
 3. **Reconciliation, not enslavement.** A dev-only gated test diffs our output against the legacy procs on real data. The size of the diff informs a one-time human judgment on whether to chase exact parity. The procs are referenced **only** in that test.
 4. **Period model: single calendar year.** A year selector; 12 monthly columns + a yearly total. Default = the most recent year with data for the selected client. (Arbitrary date ranges and non-calendar fiscal years are explicitly out of scope for v1.)
 5. **Aggregation in TypeScript (Approach B).** Prisma pulls the year's active transactions (thin typed query); a pure service buckets/sums/signs/totals. No SQL strings in the db package; business logic is unit-testable with zero DB.
-6. **Auth: `requireStaff` for v1.** Staff pick a client via the existing switcher. Customer self-view ("a client sees their own P&L") is deferred.
+6. **Auth: `requireStaff` + firm scoping for v1.** Staff pick a client via the existing switcher. The route reads `firmClientId` from the JWT (never from the query) and verifies the requested `clientId` belongs to that firm before returning any data — a staff user from firm A must not be able to read a client in firm B. Customer self-view ("a client sees their own P&L") is deferred.
 7. **Print deferred.** The `/reports/profit-loss/print` stub stays a stub; print is a fast follow that reuses this slice's hook + table.
 
 ## Global constraints (inherited)
@@ -44,6 +44,8 @@ Rebuild the legacy Income Statement (Profit & Loss) as a working full-stack vert
 - **Include uncategorized entries consistently** in both line items and totals (Expense section) — fixes the detail-vs-totals mismatch.
 - **No weekly bucketing**, so the overlapping-`BETWEEN` double-count bug cannot occur.
 - Sign normalization happens once in the service; the contract and UI only ever see natural signs.
+- **Join on `Account_Code` (the NOT-NULL int PK), not `Account_ID`.** The legacy procs join transactions→accounts on `Account_ID` (a nullable, non-unique `VarChar`); we use the `Account_Code` FK relation instead. This is the cleaner, canonical key, but it means our row set can differ from the procs where `Account_ID` is null/mismatched — an **expected, documented** divergence the reconciliation must account for, not treat as an error.
+- **Uncategorized synthetic account uses `code = -1`** (a clean-room sentinel; the **name** "Uncategorized Expense" matches legacy, the **code** intentionally does not — legacy uses the real account's `Account_Code`).
 
 ---
 
@@ -58,9 +60,10 @@ packages/db/src/repositories/
 packages/db/src/
   income-statement.int.spec.ts   GATED reconciliation: clean output vs legacy procs (diff report)
 packages/server/src/income-statement/
+  types.ts                       PlTxnRow re-export (keeps the service runtime-pure)
   service.ts                     buildIncomeStatement(rows, req)  — PURE
   service.spec.ts                unit tests (fixtures)
-  routes.ts                      GET /api/income-statement (zod-validated, requireStaff)
+  routes.ts                      GET /api/income-statement + /years (zod-validated, requireStaff + firm scope)
   routes.spec.ts                 app.request() + fake repo
 packages/api-client/src/
   use-income-statement.ts        React Query hook
@@ -111,18 +114,20 @@ IncomeStatement = {
 
 - `months` arrays are always length 12 (zero-filled), Jan→Dec.
 - All amounts are **natural presentation sign** (income +, expense +, COGS +, netIncome signed).
-- Schema enforces `months.length === 12`. Types are `z.infer`-ed and shared server↔client.
+- Schema enforces `months.length === 12`. All amounts are `z.number().finite()` (reject `NaN`/`Infinity` from any float mishap). Types are `z.infer`-ed and shared server↔client.
 
 ## DB repository (`packages/db/src/repositories/income-statement.ts`)
 
 Thin, typed Prisma queries (the test seam). No business logic.
 
+- `clientInFirm(userId, firmClientId): Promise<boolean>`
+  - `Users.findFirst({ UserId: userId, Client_Id: firmClientId, Is_Customer: true, Is_Active: true })`. The firm-scoping guard for the route. (AccountTransaction has no `Users` relation, so we can't fold the firm filter into the data query directly — hence an explicit membership check.)
 - `getTransactionsForYear(userId, year): Promise<PlTxnRow[]>`
-  - Joins `AccountTransaction` → `Accounts`; `where` UserId, `Is_Active = true`, `Account_Type IN ('Income','Expense','Cost of Goods Sold')`, `Posted_Date` in `[year-01-01, year-12-31]`.
-  - Plus the uncategorized stream: active `UncategorizedEntries` for the user in range, projected to a synthetic Expense account (`code`/`name` = "Uncategorized Expense", matching how legacy names it).
-  - `PlTxnRow = { accountCode, accountName, accountCategory, accountType, postedMonth /* 1..12 */, amount }`.
+  - Joins `AccountTransaction` → `Accounts` via the `Account_Code` FK relation (see "deliberate differences"); `where` UserId, `Is_Active = true`, related `Account_Type IN ('Income','Expense','Cost of Goods Sold')`, `Posted_Date` in `[year-01-01, (year+1)-01-01)` (half-open UTC range). `Account_Type` is **trimmed** before the section match (legacy `RTRIM`s it; padded `NVarChar` values would otherwise silently drop rows).
+  - Plus the uncategorized stream: active `UncategorizedEntries` for the user in range, projected to a synthetic Expense account (`code = -1`, name "Uncategorized Expense").
+  - `PlTxnRow = { accountCode, accountName, accountCategory, accountType, postedMonth /* 1..12, UTC */, amount /* Decimal→number */ }`.
 - `getAvailableYears(userId): Promise<number[]>`
-  - Distinct `YEAR(Posted_Date)` across the same active, in-scope transactions (incl. uncategorized), descending. Drives the year selector and the default (first element).
+  - Distinct `YEAR(Posted_Date)` across the same active, in-scope transactions (incl. uncategorized), descending. Drives the year selector and the default (first element). (v1 dedups in JS; a `SELECT DISTINCT YEAR(...)` raw query is a known cheaper follow-up.)
 
 ## Service (`packages/server/src/income-statement/service.ts`) — pure
 
@@ -138,8 +143,9 @@ Thin, typed Prisma queries (the test seam). No business logic.
 
 ## Route (`packages/server/src/income-statement/routes.ts`)
 
-- `GET /api/income-statement` with `zValidator("query", incomeStatementRequestSchema)`.
-- Middleware: `requireStaff` (v1). (Authorization note: a future customer self-view would relax this to `requireAuth` + "clientId must equal own userId unless staff".)
+- `GET /api/income-statement` with `zValidator("query", incomeStatementRequestSchema)`. Also `GET /api/income-statement/years` with `clientId`.
+- Middleware: `requireStaff` (v1). (Future customer self-view would relax this to `requireAuth` + "clientId must equal own userId unless staff".)
+- **Firm scoping (both routes):** read `firmClientId` from `c.get("user")` (the token), then `if (!(await deps.clientInFirm(clientId, firmClientId))) throw new HTTPException(404, ...)` before fetching data. `clientId` from the query is never trusted on its own. A `404` (not `403`) avoids confirming the client exists in another firm.
 - Handler: `repo.getTransactionsForYear(clientId, year)` → `buildIncomeStatement` → `incomeStatementSchema.parse(...)` → `c.json(...)`.
 - Mounted `app.route("/api/income-statement", createIncomeStatementRoutes(deps))`; `AppType` picks it up automatically for RPC typing.
 
@@ -158,10 +164,12 @@ Thin, typed Prisma queries (the test seam). No business logic.
 
 ## Reconciliation (`packages/db/src/income-statement.int.spec.ts`) — gated, dev-only
 
-- Runs only when `RUN_DB_TESTS=1` (+ DB env), like the existing `clients.int.spec.ts`.
-- For `(UserId 2189, year 2025)`: executes both legacy procs via `prisma.$queryRawUnsafe('EXEC QBAutomation_ProfitLoss_TEST ...')` **and** builds our `IncomeStatement` from `getTransactionsForYear`.
-- Emits a **diff report**: per-account monthly + yearly, section subtotals, Gross Profit, Net Income — with absolute + relative deltas.
-- This is the comparison effort. Expected, documented differences: uncategorized handling, absence of weekly buckets. The report's magnitude on the core totals is what we use to decide parity follow-up. **No production code path imports the procs.**
+- **Gate on the variables that actually drive the connection:** `RUN = process.env.RUN_DB_TESTS === "1" && !!process.env.MAC_DB_SERVER`. (Do **not** copy the `clients.int.spec.ts` `DATABASE_URL` gate — `DATABASE_URL` only feeds the Prisma CLI/`prisma.config.ts` and is empty in `.env.example`, so it would skip even when the DB is reachable.)
+- **Oracle = proc 1 (`QBAutomation_ProfitLoss_TEST`) with uncategorized correctly mapped.** Critically, proc 1 tags uncategorized rows `Type = 'Uncategorized'` (not `'Expense'`), so the mirror must map `'Uncategorized' → Expense` before bucketing, to match our production convention. Comparing the two sides on the **same population** is the whole point — otherwise the Expense delta is just the uncategorized total and the report is meaningless.
+- **Step 0: a 10-minute binding spike.** Confirm the exact working `prisma.$queryRawUnsafe('EXEC dbo.QBAutomation_ProfitLoss_TEST ...')` invocation under `@prisma/adapter-mssql` (positional `?` vs named `@p`) and write the verified form into the test. Don't ship a task whose core call is unproven.
+- For `(UserId 2189, year 2025)`: EXEC proc 1 and build our totals from `getTransactionsForYear`; emit a **diff report** of per-type/section totals (and per-account where feasible) with absolute deltas.
+- Expected, documented differences (do not flag as errors): the `Account_Code` vs `Account_ID` join key (some proc rows dropped/added), absence of weekly buckets. Apply a small tolerance (e.g. `|delta| < 0.01`) to absorb float/rounding noise.
+- This is the comparison effort; its magnitude on the core totals drives the parity decision. **No production code path imports the procs.**
 
 ## Error / edge handling
 
@@ -169,14 +177,16 @@ Thin, typed Prisma queries (the test seam). No business logic.
 |------|--------|
 | Invalid/missing query params | 400 (zod) |
 | Unauthenticated / not staff | 401 / 403 |
-| No transactions for client+year | 200, empty sections (UI empty state) |
+| `clientId` not in the caller's firm | 404 (no cross-firm disclosure) |
+| Client in firm, but no transactions for the year | 200, empty sections (UI empty state) |
+| Client has no years with data at all | 200 empty years; UI shows "no data for this client" |
 | DB failure | 500 via existing error middleware |
 
 ## Testing
 
 - **Service unit** (pure fixtures): sign-flip, month bucketing, subtotals, GP/NI, empty input, uncategorized inclusion.
 - **Contract**: schema accept/reject; `months.length === 12` enforcement.
-- **Route**: `app.request()` with a fake repo — 200 shape, 400 on bad params, 403 for non-staff.
+- **Route**: `app.request()` with a fake repo — 200 shape, 400 on bad/non-numeric params, 403 for non-staff, **404 for a client outside the caller's firm** (cross-firm guard).
 - **Hook**: MSW success + error.
 - **Page**: MSW-driven loading / error / empty / success.
 - **Reconciliation**: gated integration diff (above).
@@ -187,5 +197,5 @@ Thin, typed Prisma queries (the test seam). No business logic.
 
 ## Open questions (non-blocking, resolve during planning)
 
-1. **Available-years delivery:** a tiny separate endpoint/hook (`GET /api/income-statement/years?clientId=`) vs. embedding `availableYears` in the main response vs. a combined "report meta" call. Leaning: small dedicated `getAvailableYears` endpoint so the year selector can populate before a full report is fetched.
-2. **`$queryRawUnsafe` proc invocation** under the `@prisma/adapter-mssql` adapter — confirm parameter binding for `EXEC … @p=?` in the reconciliation test during Task 1 of the plan.
+1. **Available-years delivery:** resolved — a dedicated `GET /api/income-statement/years?clientId=` endpoint + `useIncomeStatementYears` hook, so the year selector populates before the full report is fetched.
+2. **`$queryRawUnsafe` proc invocation** under `@prisma/adapter-mssql` — resolved into an explicit binding spike (Step 0 of the reconciliation task) rather than left open.

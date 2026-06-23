@@ -19,7 +19,7 @@
 - **Account-type scope (v1):** only `Income`, `Cost of Goods Sold`, `Expense`. No "Other Income/Expense".
 - **Period model:** single calendar year; 12 monthly columns (Jan→Dec) + yearly total. Default = latest year with data.
 - **Uncategorized entries:** included consistently in both line items and totals (Expense section), grouped under a synthetic account (`code = -1`, name "Uncategorized Expense").
-- **Auth:** `/api/income-statement*` is `requireStaff` for v1.
+- **Auth:** `/api/income-statement*` is `requireStaff` for v1, **and firm-scoped** — the route reads `firmClientId` from the token and 404s if the requested `clientId` isn't a customer in that firm (no cross-firm data access).
 - **Tests run with daemon disabled on Windows:** prefix Nx/vitest commands with `NX_DAEMON=false` (a concurrent-daemon `EADDRINUSE` crash was observed otherwise).
 - **Commands run hooks normally** (do not pass `--no-verify`).
 - **Spec:** `docs/superpowers/specs/2026-06-23-income-statement-design.md`.
@@ -110,6 +110,11 @@ describe("income-statement contracts", () => {
     expect(() => incomeStatementSchema.parse(bad)).toThrow();
   });
 
+  it("rejects a non-finite amount", () => {
+    const bad = { ...valid, netIncome: { months: Array(12).fill(0), total: Infinity } };
+    expect(() => incomeStatementSchema.parse(bad)).toThrow();
+  });
+
   it("validates the years payload", () => {
     expect(incomeStatementYearsSchema.parse({ years: [2025, 2024] })).toEqual({ years: [2025, 2024] });
   });
@@ -137,8 +142,9 @@ export const incomeStatementYearsRequestSchema = z.object({
   clientId: z.coerce.number().int().positive(),
 });
 
-const months12 = z.array(z.number()).length(12);
-export const bucketedSchema = z.object({ months: months12, total: z.number() });
+const amount = z.number().finite(); // reject NaN/Infinity from any float mishap
+const months12 = z.array(amount).length(12);
+export const bucketedSchema = z.object({ months: months12, total: amount });
 export type Bucketed = z.infer<typeof bucketedSchema>;
 
 export const incomeStatementAccountSchema = z.object({
@@ -146,7 +152,7 @@ export const incomeStatementAccountSchema = z.object({
   name: z.string(),
   category: z.string().nullable(),
   months: months12,
-  total: z.number(),
+  total: amount,
 });
 export type IncomeStatementAccount = z.infer<typeof incomeStatementAccountSchema>;
 
@@ -168,10 +174,10 @@ export const incomeStatementSchema = z.object({
   grossProfit: bucketedSchema,
   netIncome: bucketedSchema,
   kpis: z.object({
-    totalIncome: z.number(),
-    grossProfit: z.number(),
-    totalExpenses: z.number(),
-    netIncome: z.number(),
+    totalIncome: amount,
+    grossProfit: amount,
+    totalExpenses: amount,
+    netIncome: amount,
   }),
 });
 export type IncomeStatement = z.infer<typeof incomeStatementSchema>;
@@ -193,7 +199,7 @@ export * from "./income-statement";
 - [ ] **Step 5: Run test to verify it passes**
 
 Run: `NX_DAEMON=false npx vitest run packages/contracts/src/income-statement.spec.ts`
-Expected: PASS (4 tests).
+Expected: PASS (5 tests).
 
 - [ ] **Step 6: Commit**
 
@@ -215,6 +221,7 @@ git commit -m "feat(contracts): income statement request + response schemas"
 - Produces:
   - `UNCATEGORIZED_ACCOUNT_CODE = -1`
   - `interface PlTxnRow { accountCode: number; accountName: string; accountCategory: string | null; accountType: "Income" | "Cost of Goods Sold" | "Expense"; postedMonth: number; amount: number; }`
+  - `incomeStatementRepository.clientInFirm(userId: number, firmClientId: number): Promise<boolean>`
   - `incomeStatementRepository.getTransactionsForYear(userId: number, year: number): Promise<PlTxnRow[]>`
   - `incomeStatementRepository.getAvailableYears(userId: number): Promise<number[]>`
 
@@ -245,6 +252,15 @@ function yearRange(year: number) {
 }
 
 export const incomeStatementRepository = {
+  // Firm-scoping guard for the route: is this client a customer in the staff user's firm?
+  async clientInFirm(userId: number, firmClientId: number): Promise<boolean> {
+    const u = await prisma.users.findFirst({
+      where: { UserId: userId, Client_Id: firmClientId, Is_Customer: true, Is_Active: true },
+      select: { UserId: true },
+    });
+    return u != null;
+  },
+
   async getTransactionsForYear(userId: number, year: number): Promise<PlTxnRow[]> {
     const range = yearRange(year);
 
@@ -278,7 +294,7 @@ export const incomeStatementRepository = {
         accountCode: a.Account_Code,
         accountName: a.Account_Name?.trim() || `Account ${a.Account_Code}`,
         accountCategory: a.Account_Category?.trim() ?? null,
-        accountType: a.Account_Type as PlType,
+        accountType: (a.Account_Type?.trim() ?? "") as PlType, // legacy RTRIMs; guard padded NVarChar
         postedMonth: t.Posted_Date.getUTCMonth() + 1,
         amount: Number(t.Amount ?? 0),
       });
@@ -532,9 +548,39 @@ git commit -m "feat(server): pure income statement aggregation service"
 - Create: `packages/db/src/income-statement.int.spec.ts`
 
 **Interfaces:**
-- Consumes: `prisma`, `incomeStatementRepository` from `./index`; `buildIncomeStatement` is duplicated logic risk, so import it from the server package is NOT allowed (db must not depend on server). Instead, this test imports the repository and runs the procs, then compares against a **locally inlined** minimal aggregation mirroring the service's documented rules. Keep the comparison at the section/total level.
+- Consumes: `prisma`, `incomeStatementRepository` from `./index`. The db package MUST NOT import the server's `buildIncomeStatement` (boundary). Instead this test inlines a minimal mirror of the service's section/sign rules and compares at the section-total level.
 
-> **Why here:** this is the only place the legacy procs are referenced. It is gated behind `RUN_DB_TESTS=1` exactly like `clients.int.spec.ts`, so normal `pnpm test` never runs it and production code never imports the procs.
+> **Why here:** the only place the legacy procs are referenced. Gated so normal `pnpm test` never runs it and production code never imports the procs.
+
+> **Comparability caveats (expected, not bugs):**
+> - **Oracle = proc 1** (`QBAutomation_ProfitLoss_TEST`), with its `Type='Uncategorized'` rows mapped to Expense to match our convention (our repo folds uncategorized into Expense).
+> - **Join key differs:** the procs join transactions→accounts on `Account_ID` (nullable string); our repo joins on the `Account_Code` FK. Rows the proc drops for null/mismatched `Account_ID` can produce a non-zero delta — the documented divergence, not an error.
+> - A `< 0.01` tolerance absorbs float/rounding noise.
+
+- [ ] **Step 0: Verify the proc invocation binding (10-min spike)**
+
+Confirm the exact `$queryRawUnsafe` form that works under `@prisma/adapter-mssql` with a throwaway test, then delete it:
+
+```ts
+// scratch: packages/db/src/_recon_spike.int.spec.ts  (delete after confirming)
+import { describe, it } from "vitest";
+import { prisma } from "./index";
+const RUN = process.env.RUN_DB_TESTS === "1" && !!process.env.MAC_DB_SERVER;
+describe.skipIf(!RUN)("proc binding spike", () => {
+  it("execs proc 1 and logs row count", async () => {
+    const rows = await prisma.$queryRawUnsafe(
+      "EXEC dbo.QBAutomation_ProfitLoss_TEST @UserId = ?, @DateFrom = ?, @DateTo = ?",
+      2189, "2025-01-01", "2025-12-31",
+    );
+    // eslint-disable-next-line no-console
+    console.log("SPIKE_ROWS", Array.isArray(rows) ? rows.length : rows);
+    await prisma.$disconnect();
+  });
+});
+```
+
+Run: `NX_DAEMON=false RUN_DB_TESTS=1 npx vitest run packages/db/src/_recon_spike.int.spec.ts`
+Expected: a `SPIKE_ROWS <n>` line with `n > 0`. If positional `?` binding errors, switch to tagged `prisma.$queryRaw` with interpolated values (here the params are a trusted int + two ISO date strings) and record the working form. **Delete the scratch file**, then write the verified call into Step 1.
 
 - [ ] **Step 1: Write the gated reconciliation test**
 
@@ -543,7 +589,8 @@ git commit -m "feat(server): pure income statement aggregation service"
 import { afterAll, describe, expect, it } from "vitest";
 import { prisma, incomeStatementRepository, UNCATEGORIZED_ACCOUNT_CODE } from "./index";
 
-const RUN = !!process.env.DATABASE_URL && process.env.RUN_DB_TESTS === "1";
+// Gate on the vars that drive the live connection (NOT DATABASE_URL — that only feeds the Prisma CLI and is empty in .env.example).
+const RUN = process.env.RUN_DB_TESTS === "1" && !!process.env.MAC_DB_SERVER;
 const USER_ID = Number(process.env.RECON_USER_ID ?? 2189);
 const YEAR = Number(process.env.RECON_YEAR ?? 2025);
 
@@ -581,22 +628,30 @@ describe.skipIf(!RUN)("income statement reconciliation vs legacy procs", () => {
       to,
     );
 
-    // Legacy yearly totals per type (income stored negative → flip to compare to ours).
+    // Legacy yearly totals per type. proc 1 tags uncategorized rows Type='Uncategorized'
+    // (NOT 'Expense') — map them to Expense to match our convention, else the Expense
+    // delta is just the uncategorized total and the comparison is meaningless.
+    // Income is stored negative → flip to compare to our natural-sign totals.
     const procTotals = { Income: 0, "Cost of Goods Sold": 0, Expense: 0 } as Record<string, number>;
     for (const r of procRows) {
-      const t = r.Type;
+      const t = r.Type === "Uncategorized" ? "Expense" : r.Type;
       if (t in procTotals) procTotals[t] += t === "Income" ? -r.Yearly_Total : r.Yearly_Total;
     }
 
     const rows = await incomeStatementRepository.getTransactionsForYear(USER_ID, YEAR);
     const ours = ourSectionTotals(rows);
 
-    const report = (["Income", "Cost of Goods Sold", "Expense"] as const).map((t) => ({
-      type: t,
-      proc: Math.round(procTotals[t] * 100) / 100,
-      ours: Math.round(ours[t] * 100) / 100,
-      delta: Math.round((ours[t] - procTotals[t]) * 100) / 100,
-    }));
+    const TOLERANCE = 0.01; // absorb float/rounding noise; real divergence shows above this
+    const report = (["Income", "Cost of Goods Sold", "Expense"] as const).map((t) => {
+      const delta = Math.round((ours[t] - procTotals[t]) * 100) / 100;
+      return {
+        type: t,
+        proc: Math.round(procTotals[t] * 100) / 100,
+        ours: Math.round(ours[t] * 100) / 100,
+        delta,
+        withinTolerance: Math.abs(delta) < TOLERANCE,
+      };
+    });
 
     const uncategorizedOurs = rows
       .filter((r) => r.accountCode === UNCATEGORIZED_ACCOUNT_CODE)
@@ -641,8 +696,8 @@ git commit -m "test(db): gated reconciliation of income statement vs legacy proc
 **Interfaces:**
 - Consumes: `incomeStatementRequestSchema`, `incomeStatementYearsRequestSchema` from contracts; `buildIncomeStatement` from `./service`; `requireStaff` from `../middleware/request-context`; `PlTxnRow` from `./types`.
 - Produces: `createIncomeStatementRoutes(deps: IncomeStatementDeps)` where
-  `IncomeStatementDeps = { getTransactionsForYear(userId: number, year: number): Promise<PlTxnRow[]>; getAvailableYears(userId: number): Promise<number[]>; }`.
-  Routes: `GET /` (query `clientId`,`year`) → `IncomeStatement`; `GET /years` (query `clientId`) → `{ years }`.
+  `IncomeStatementDeps = { clientInFirm(userId: number, firmClientId: number): Promise<boolean>; getTransactionsForYear(userId: number, year: number): Promise<PlTxnRow[]>; getAvailableYears(userId: number): Promise<number[]>; }`.
+  Routes: `GET /` (query `clientId`,`year`) → `IncomeStatement`; `GET /years` (query `clientId`) → `{ years }`. Both read `firmClientId` from the token and 404 if the requested `clientId` is not in that firm.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -666,6 +721,7 @@ const rows: PlTxnRow[] = [
   { accountCode: 4010, accountName: "Sales", accountCategory: null, accountType: "Income", postedMonth: 1, amount: -1000 },
 ];
 const deps = {
+  clientInFirm: async (id: number) => id === 2189, // 2189 is in firm 69; anything else is not
   getTransactionsForYear: async () => rows,
   getAvailableYears: async () => [2025, 2024],
 };
@@ -715,6 +771,22 @@ describe("income statement routes", () => {
     });
     expect(res.status).toBe(403);
   });
+
+  it("404s when the client is not in the caller's firm (cross-firm guard)", async () => {
+    const app = appWith();
+    const res = await app.request("/api/income-statement?clientId=9999&year=2025", {
+      headers: { Authorization: await bearer(staff) },
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it("400s on a non-numeric year", async () => {
+    const app = appWith();
+    const res = await app.request("/api/income-statement?clientId=2189&year=abc", {
+      headers: { Authorization: await bearer(staff) },
+    });
+    expect(res.status).toBe(400);
+  });
 });
 ```
 
@@ -736,25 +808,39 @@ import {
   incomeStatementYearsSchema,
   type SessionUser,
 } from "@accounting-completed/contracts";
+import { HTTPException } from "hono/http-exception";
 import { requireStaff } from "../middleware/request-context";
 import { buildIncomeStatement } from "./service";
 import type { PlTxnRow } from "./types";
 
 export interface IncomeStatementDeps {
+  clientInFirm(userId: number, firmClientId: number): Promise<boolean>;
   getTransactionsForYear(userId: number, year: number): Promise<PlTxnRow[]>;
   getAvailableYears(userId: number): Promise<number[]>;
+}
+
+// Verify the requested client belongs to the caller's firm before returning data.
+// 404 (not 403) avoids confirming the client exists in another firm.
+async function assertClientInFirm(deps: IncomeStatementDeps, clientId: number, firmClientId: number) {
+  if (!(await deps.clientInFirm(clientId, firmClientId))) {
+    throw new HTTPException(404, { message: "Client not found" });
+  }
 }
 
 export function createIncomeStatementRoutes(deps: IncomeStatementDeps) {
   return new Hono<{ Variables: { user: SessionUser | null } }>()
     .get("/", requireStaff, zValidator("query", incomeStatementRequestSchema), async (c) => {
       const { clientId, year } = c.req.valid("query");
+      const firmClientId = c.get("user")!.firmClientId ?? 0;
+      await assertClientInFirm(deps, clientId, firmClientId);
       const rows = await deps.getTransactionsForYear(clientId, year);
       const statement = buildIncomeStatement(rows, { clientId, year, generatedAt: new Date().toISOString() });
       return c.json(incomeStatementSchema.parse(statement));
     })
     .get("/years", requireStaff, zValidator("query", incomeStatementYearsRequestSchema), async (c) => {
       const { clientId } = c.req.valid("query");
+      const firmClientId = c.get("user")!.firmClientId ?? 0;
+      await assertClientInFirm(deps, clientId, firmClientId);
       const years = await deps.getAvailableYears(clientId);
       return c.json(incomeStatementYearsSchema.parse({ years }));
     });
@@ -781,6 +867,7 @@ const routes = app
   .route("/api/auth", createAuthRoutes({ findByUsername: usersRepository.findByUsername }))
   .route("/api/clients", createClientsRoutes({ list: clientsRepository.list }))
   .route("/api/income-statement", createIncomeStatementRoutes({
+    clientInFirm: incomeStatementRepository.clientInFirm,
     getTransactionsForYear: incomeStatementRepository.getTransactionsForYear,
     getAvailableYears: incomeStatementRepository.getAvailableYears,
   }))
@@ -790,7 +877,7 @@ const routes = app
 - [ ] **Step 5: Run tests to verify they pass**
 
 Run: `NX_DAEMON=false npx vitest run packages/server/src/income-statement/routes.spec.ts`
-Expected: PASS (4 tests).
+Expected: PASS (6 tests).
 
 - [ ] **Step 6: Run the full server package tests (no regressions)**
 
@@ -1076,6 +1163,9 @@ export function ProfitLossPage() {
         </label>
       </div>
 
+      {yearsQuery.isSuccess && yearsQuery.data.length === 0 && (
+        <div className="text-text-soft">No data available for this client.</div>
+      )}
       {statementQuery.isLoading && <div className="text-text-soft">Loading…</div>}
       {statementQuery.isError && (
         <div className="text-destructive">
@@ -1234,6 +1324,9 @@ Run the gated test (Task 4 Step 2) and paste the `RECON_REPORT` deltas into a sh
 
 - **Spec coverage:** contract (Task 1), repo incl. uncategorized + years (Task 2), pure service with signs/sections/GP/NI (Task 3), reconciliation (Task 4), staff-only route + mount (Task 5), hooks (Task 6), page with states + router wiring (Task 7). Print, ranges, fiscal years, customer self-view = explicitly deferred per spec.
 - **Decoupling:** procs referenced only in the gated Task 4 test; production code never imports them.
-- **Type consistency:** `PlTxnRow` defined in Task 2 (db), re-exported via `./types` (Task 3) and consumed by service/route; `IncomeStatementDeps` method names match `incomeStatementRepository` method names used at the Task 5 mount.
-- **Open items to resolve during execution:** confirm `$queryRawUnsafe('EXEC … @p = ?')` parameter binding under `@prisma/adapter-mssql` (Task 4 Step 2); if positional binding misbehaves, switch to interpolated `Prisma.sql`/tagged `$queryRaw` with named params.
+- **Type consistency:** `PlTxnRow` defined in Task 2 (db), re-exported via `./types` (Task 3) and consumed by service/route; `IncomeStatementDeps` method names (`clientInFirm`, `getTransactionsForYear`, `getAvailableYears`) match `incomeStatementRepository` method names used at the Task 5 mount.
+- **Security (independent review B1):** cross-firm IDOR closed — both routes verify `clientInFirm(clientId, firmClientId)` (token-derived firm) and 404 otherwise; covered by a Task 5 route test.
+- **Reconciliation reliability (independent review M1–M5):** oracle = proc 1 with `'Uncategorized'`→Expense mapping (M1); `Account_Code` vs `Account_ID` join divergence documented, not flagged as error (M2/M3); gate fixed to `MAC_DB_SERVER` not `DATABASE_URL` (M4); proc binding validated in a Step 0 spike before the real test (M5); `< 0.01` tolerance for float noise.
+- **Hardening (review MINORs):** `z.number().finite()` amounts; `Account_Type` trimmed before section match; explicit "no years for this client" empty state; non-numeric `year`→400 test.
+- **Known perf cost:** `getAvailableYears` dedups years in JS over two scans; a `SELECT DISTINCT YEAR(...)` raw query is a documented follow-up, acceptable for v1.
 ```
