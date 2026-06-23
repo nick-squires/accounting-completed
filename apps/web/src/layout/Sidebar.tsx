@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { CLIENTS, navForRole, ROLES } from "@accounting-completed/domain";
+import { useMe, useClients } from "@accounting-completed/api-client";
 import { Avatar, AvatarRound, Button } from "@accounting-completed/ui";
 import { useRole } from "../app/role-context";
 import { useClient } from "../app/client-context";
@@ -11,10 +12,15 @@ interface SidebarProps {
 
 export function Sidebar({ onClientClick }: SidebarProps) {
   const { role } = useRole();
-  const { clientId } = useClient();
+  const { clientId, setClientId } = useClient();
   const r = ROLES[role] ?? ROLES.staff;
-  const client = CLIENTS.find((c) => c.id === clientId) ?? CLIENTS[0];
+  // Fall back to mock CLIENTS for display when API data isn't loaded
+  const localClient = CLIENTS.find((c) => c.id === clientId) ?? CLIENTS[0];
   const groups = navForRole(role);
+
+  const { data: me } = useMe();
+  const isStaff = me?.roles?.isStaff ?? false;
+  const { data: apiClients, isLoading: clientsLoading } = useClients();
 
   return (
     <aside className="w-[240px] flex flex-col bg-sidebar border-r border-sidebar-border overflow-hidden">
@@ -36,20 +42,50 @@ export function Sidebar({ onClientClick }: SidebarProps) {
           type="button"
           className="mx-3 mt-3 px-3 py-2.5 flex items-center gap-3 bg-muted border border-border rounded-md hover:bg-secondary hover:border-border-strong transition-colors text-left"
         >
-          <Avatar size={32} className="text-[12px]">{client.initials}</Avatar>
+          <Avatar size={32} className="text-[12px]">{localClient.initials}</Avatar>
           <div className="flex-1 min-w-0">
-            <div className="text-[13.5px] font-medium truncate">{client.name}</div>
-            <div className="text-[11px] text-text-soft truncate">{client.sub}</div>
+            <div className="text-[13.5px] font-medium truncate">{localClient.name}</div>
+            <div className="text-[11px] text-text-soft truncate">{localClient.sub}</div>
           </div>
           <span className="text-text-soft flex-shrink-0">{ICONS.chevUpDown}</span>
         </button>
       ) : (
         <div className="mx-3 mt-3 px-3 py-2.5 flex items-center gap-3 bg-muted border border-border rounded-md">
-          <Avatar size={32} className="text-[12px]">{client.initials}</Avatar>
+          <Avatar size={32} className="text-[12px]">{localClient.initials}</Avatar>
           <div className="flex-1 min-w-0">
-            <div className="text-[13.5px] font-medium truncate">{client.name}</div>
-            <div className="text-[11px] text-text-soft truncate">{client.sub}</div>
+            <div className="text-[13.5px] font-medium truncate">{localClient.name}</div>
+            <div className="text-[11px] text-text-soft truncate">{localClient.sub}</div>
           </div>
+        </div>
+      )}
+
+      {/* Live client list — staff only, driven by useClients() */}
+      {isStaff && r.canSwitchClient && (
+        <div className="mx-3 mt-1 text-[11px] text-text-soft">
+          {clientsLoading && <span className="px-3 py-1 block">Loading clients…</span>}
+          {!clientsLoading && apiClients && apiClients.length === 0 && (
+            <span className="px-3 py-1 block">No clients available</span>
+          )}
+          {!clientsLoading && apiClients && apiClients.length > 0 && (
+            <ul className="mt-1 space-y-0.5">
+              {apiClients.map((c) => (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    onClick={() => setClientId(c.id)}
+                    className={[
+                      "w-full text-left px-3 py-1 rounded-md transition-colors",
+                      c.id === clientId
+                        ? "bg-accent text-accent-foreground font-medium"
+                        : "hover:bg-secondary hover:text-foreground text-muted-foreground",
+                    ].join(" ")}
+                  >
+                    {c.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 

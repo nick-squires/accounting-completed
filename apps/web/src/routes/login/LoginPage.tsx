@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLogin } from "@accounting-completed/api-client";
 import { Button, Input, Kbd } from "@accounting-completed/ui";
 
 const features = [
@@ -11,13 +12,21 @@ const features = [
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const login = useLogin();
   const [email, setEmail]       = useState("scott@recordsinorder.com");
   const [pw, setPw]             = useState("");
   const [remember, setRemember] = useState(true);
+  const [error, setError]       = useState<string | null>(null);
 
-  function handleSignIn(e: React.FormEvent) {
+  async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
-    navigate("/dashboard");
+    setError(null);
+    try {
+      await login.mutateAsync({ username: email, password: pw });
+      navigate("/dashboard");
+    } catch {
+      setError("Invalid email or password. Please try again.");
+    }
   }
 
   return (
@@ -172,16 +181,25 @@ export function LoginPage() {
               Keep me signed in on this browser
             </label>
 
+            {error && (
+              <p role="alert" className="text-[13px] text-destructive">
+                {error}
+              </p>
+            )}
+
             <Button
               type="submit"
               variant="primary"
               size="lg"
               className="w-full mt-2 justify-center"
+              disabled={login.isPending}
             >
-              Sign in to Accounting Completed
-              <span className="text-[11px] opacity-70">
-                <Kbd>↵</Kbd>
-              </span>
+              {login.isPending ? "Signing in…" : "Sign in to Accounting Completed"}
+              {!login.isPending && (
+                <span className="text-[11px] opacity-70">
+                  <Kbd>↵</Kbd>
+                </span>
+              )}
             </Button>
           </form>
 
