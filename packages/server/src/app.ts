@@ -5,7 +5,8 @@ import { onError } from "./middleware/error";
 import { requestContext } from "./middleware/request-context";
 import { createAuthRoutes } from "./auth/routes";
 import { createClientsRoutes } from "./clients/routes";
-import { clientsRepository, usersRepository } from "@accounting-completed/db";
+import { createIncomeStatementRoutes } from "./income-statement/routes";
+import { clientsRepository, usersRepository, incomeStatementRepository } from "@accounting-completed/db";
 
 export const app = new Hono();
 
@@ -27,6 +28,11 @@ app.use("*", requestContext);
 const routes = app
   .route("/api/auth", createAuthRoutes({ findByUsername: usersRepository.findByUsername }))
   .route("/api/clients", createClientsRoutes({ list: clientsRepository.list }))
+  .route("/api/income-statement", createIncomeStatementRoutes({
+    clientInFirm: incomeStatementRepository.clientInFirm,
+    getTransactionsForYear: incomeStatementRepository.getTransactionsForYear,
+    getAvailableYears: incomeStatementRepository.getAvailableYears,
+  }))
   .get("/health", (c) => c.json({ status: "ok" }));
 
 export type AppType = typeof routes;
