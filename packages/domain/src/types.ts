@@ -57,3 +57,23 @@ export interface DeadlineItem {
   in: string;
   urgent?: boolean;
 }
+
+export type TxnConfidence = "exact" | "high" | "med" | "low" | "none";
+export type TxnType = "credit" | "debit";
+export type TxnStatus = "review" | "categorized" | "excluded";
+
+export interface Transaction {
+  id: string;
+  date: string;
+  iso: string;
+  desc: string;
+  memo: string | null;
+  amount: number;
+  account: string;
+  suggested: string | null;
+  rule: string | null;
+  confidence: TxnConfidence;
+  type: TxnType;
+  status: TxnStatus;
+  needsAttn?: boolean;
+}

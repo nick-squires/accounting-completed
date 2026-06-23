@@ -3,6 +3,7 @@ import { AppLayout } from "./layout/AppLayout";
 import { StubPage } from "./routes/_stub/StubPage";
 import { LoginPage } from "./routes/login/LoginPage";
 import { DashboardPage } from "./routes/dashboard/DashboardPage";
+import { TransactionsPage } from "./routes/transactions/TransactionsPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/login" replace /> },
@@ -11,7 +12,7 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { path: "/dashboard", element: <DashboardPage />, handle: { title: "Dashboard", crumbs: ["Dashboard"] } },
-      { path: "/transactions", element: <StubPage />, handle: { title: "Transactions", crumbs: ["Transactions"] } },
+      { path: "/transactions", element: <TransactionsPage />, handle: { title: "Transactions", crumbs: ["Transactions"] } },
       { path: "/bank-feeds", element: <StubPage />, handle: { title: "Bank feeds", crumbs: ["Bank feeds"] } },
       { path: "/reports/profit-loss", element: <StubPage />, handle: { title: "Profit & Loss", crumbs: ["Reports", "Profit & Loss"] } },
       { path: "/reports/profit-loss/print", element: <StubPage />, handle: { title: "Profit & Loss (print)", crumbs: ["Reports", "Profit & Loss", "Print"] } },
