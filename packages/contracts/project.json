@@ -1,0 +1,15 @@
+{
+  "name": "contracts",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/contracts/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:contracts"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vite:test",
+      "options": {
+        "config": "packages/contracts/vite.config.ts"
+      }
+    }
+  }
+}
