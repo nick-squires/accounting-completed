@@ -33,7 +33,17 @@ The bar is **foundation-grade on every layer** — not a minimum slice.
 | Data access | Repository pattern over Prisma; stored procs (future) via typed `$queryRaw` + zod result schemas |
 | Frontend data layer | **React Query** hooks in `packages/api-client`, built on the Hono RPC client + contract validation |
 | Proving consumer | **Clients list** end-to-end, wired into the real Sidebar/`ClientContext` switcher (replacing mock `CLIENTS`) |
+| Auth | **First-party credentials**, verified against existing `Users`; signed JWT in an httpOnly cookie (see §3a) |
 | Scope | **Foundation only.** Income-statement page deferred. |
+
+## 3a. Authentication & session (decided)
+
+- **First-party credential auth.** No external IdP. Our own React sign-in page POSTs username + password to the Hono API. We do **not** reuse the legacy `.ASPXAUTH` Forms ticket, `machineKey`, or the DES-encrypted role cookies (verified: legacy is ASP.NET Forms Auth + per-session DES cookies — brittle and tightly coupled; avoided entirely).
+- **Verify against the existing `Users` table (read-only).** Legacy stores passwords as **MD5** via `FormsAuthentication.HashPasswordForStoringInConfigFile(pwd, "md5")` (uppercase hex). Our login computes the same MD5 over the entered password and compares to `Users.Password`. (Confirm the exact byte encoding against a known credential during implementation.)
+- **Session = signed JWT in an `httpOnly`, `Secure`, `SameSite=Lax` cookie.** Stateless → no sessions table (respects no-DB-changes). Claims: `userId`, firm `clientId` (`Client_Id`), `roleId`, and role flags (`isStaff`/`isCustomer`/`isEmployee`/`isAdmin`), read from the `Users` row at login. Sliding re-issue; logout clears the cookie. JWT secret from env/secret store; short lifetime.
+- **`requestContext` middleware** verifies the cookie and exposes `{ user, firmClientId, roles }`; every endpoint scopes off it (the clients list takes the firm from context, not a query param).
+- **Endpoints:** `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`.
+- **Security debt flagged:** (1) MD5 is weak — acceptable only as a *verification shim* for existing hashes; plan a transparent rehash to argon2/bcrypt on successful login once limited writes to `Users.Password` are sanctioned. (2) Inspect `Users.Password_Normal` — if it holds plaintext/recoverable passwords, treat as a cleanup item.
 
 ## 4. Prisma 7 setup (verified specifics)
 
@@ -87,8 +97,8 @@ New Nx scope tags + `enforce-module-boundaries` constraints: `scope:db`→[], `s
 
 These are deliberately **not** decided yet — they shape the foundation and need discussion:
 
-1. **Auth / identity / session** — there is none yet; firm `Client_Id` is hardcoded (69). How do real users authenticate, and how is "current firm/client" derived (vs. a query param)?
-2. **Authorization / multi-tenancy** — role-based access (legacy `RoleAccess`), scoping every query to the caller's firm/clients.
+1. ~~Auth / identity / session~~ — **DECIDED, see §3a** (first-party credentials → MD5-verify against `Users` → signed JWT in an httpOnly cookie; firm/roles from the `Users` row).
+2. **Authorization depth / multi-tenancy** — still open: how granular to enforce role-based access (legacy `RoleAccess` menu permissions) now vs. later, and confirming every query is scoped to the caller's firm/clients via `requestContext`.
 3. **API error contract** — standard error shape, status mapping, validation-error format.
 4. **Logging / observability** — structured logs, request logging, error tracking, correlation Ids.
 5. **Config & secrets management** — env validation (zod), dev/prod split, secret storage (Key Vault?).
