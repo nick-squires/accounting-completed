@@ -1,26 +1,50 @@
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { CLIENTS, navForRole, ROLES } from "@accounting-completed/domain";
 import { useMe, useClients } from "@accounting-completed/api-client";
 import { Avatar, AvatarRound, Button } from "@accounting-completed/ui";
 import { useRole } from "../app/role-context";
 import { useClient } from "../app/client-context";
+import { ClientSwitcher } from "./ClientSwitcher";
 import { ICONS } from "./icons";
 
-interface SidebarProps {
-  onClientClick?: () => void;
+function deriveInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const letters = words.slice(0, 2).map((w) => w[0] ?? "").join("");
+  return letters.toUpperCase() || "?";
 }
 
-export function Sidebar({ onClientClick }: SidebarProps) {
+export function Sidebar() {
   const { role } = useRole();
   const { clientId, setClientId } = useClient();
   const r = ROLES[role] ?? ROLES.staff;
-  // Fall back to mock CLIENTS for display when API data isn't loaded
-  const localClient = CLIENTS.find((c) => c.id === clientId) ?? CLIENTS[0];
   const groups = navForRole(role);
 
   const { data: me } = useMe();
   const isStaff = me?.roles?.isStaff ?? false;
   const { data: apiClients, isLoading: clientsLoading } = useClients({ enabled: isStaff });
+
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+
+  // ⌘K / Ctrl+K toggles the client switcher for staff.
+  useEffect(() => {
+    if (!r.canSwitchClient) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSwitcherOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [r.canSwitchClient]);
+
+  // Display the live-selected client; fall back to mock CLIENTS for initial load / non-staff.
+  const selected = apiClients?.find((c) => c.id === clientId);
+  const localClient = CLIENTS.find((c) => c.id === clientId) ?? CLIENTS[0];
+  const clientName = selected?.name ?? localClient.name;
+  const clientSub = selected ? "Client" : localClient.sub;
+  const clientInitials = selected ? deriveInitials(selected.name) : localClient.initials;
 
   return (
     <aside className="w-[240px] flex flex-col bg-sidebar border-r border-sidebar-border overflow-hidden">
@@ -38,59 +62,29 @@ export function Sidebar({ onClientClick }: SidebarProps) {
       {/* Client switcher / brand panel */}
       {r.canSwitchClient ? (
         <button
-          onClick={onClientClick}
+          onClick={() => setSwitcherOpen(true)}
           type="button"
           className="mx-3 mt-3 px-3 py-2.5 flex items-center gap-3 bg-muted border border-border rounded-md hover:bg-secondary hover:border-border-strong transition-colors text-left"
         >
-          <Avatar size={32} className="text-[12px]">{localClient.initials}</Avatar>
+          <Avatar size={32} className="text-[12px]">{clientInitials}</Avatar>
           <div className="flex-1 min-w-0">
-            <div className="text-[13.5px] font-medium truncate">{localClient.name}</div>
-            <div className="text-[11px] text-text-soft truncate">{localClient.sub}</div>
+            <div className="text-[13.5px] font-medium truncate">{clientName}</div>
+            <div className="text-[11px] text-text-soft truncate">{clientSub}</div>
           </div>
           <span className="text-text-soft flex-shrink-0">{ICONS.chevUpDown}</span>
         </button>
       ) : (
         <div className="mx-3 mt-3 px-3 py-2.5 flex items-center gap-3 bg-muted border border-border rounded-md">
-          <Avatar size={32} className="text-[12px]">{localClient.initials}</Avatar>
+          <Avatar size={32} className="text-[12px]">{clientInitials}</Avatar>
           <div className="flex-1 min-w-0">
-            <div className="text-[13.5px] font-medium truncate">{localClient.name}</div>
-            <div className="text-[11px] text-text-soft truncate">{localClient.sub}</div>
+            <div className="text-[13.5px] font-medium truncate">{clientName}</div>
+            <div className="text-[11px] text-text-soft truncate">{clientSub}</div>
           </div>
         </div>
       )}
 
-      {/* Live client list — staff only, driven by useClients() */}
-      {isStaff && r.canSwitchClient && (
-        <div className="mx-3 mt-1 text-[11px] text-text-soft">
-          {clientsLoading && <span className="px-3 py-1 block">Loading clients…</span>}
-          {!clientsLoading && apiClients && apiClients.length === 0 && (
-            <span className="px-3 py-1 block">No clients available</span>
-          )}
-          {!clientsLoading && apiClients && apiClients.length > 0 && (
-            <ul className="mt-1 space-y-0.5">
-              {apiClients.map((c) => (
-                <li key={c.id}>
-                  <button
-                    type="button"
-                    onClick={() => setClientId(c.id)}
-                    className={[
-                      "w-full text-left px-3 py-1 rounded-md transition-colors",
-                      c.id === clientId
-                        ? "bg-accent text-accent-foreground font-medium"
-                        : "hover:bg-secondary hover:text-foreground text-muted-foreground",
-                    ].join(" ")}
-                  >
-                    {c.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2 flex flex-col">
+      <nav className="flex-1 overflow-y-auto px-3 py-2 flex flex-col mt-2">
         {groups.map(({ group, items }) => (
           <div key={group.key} className="mb-4">
             {group.label && (
@@ -158,6 +152,17 @@ export function Sidebar({ onClientClick }: SidebarProps) {
           <span className="w-4 h-4 grid place-items-center">{ICONS.bell}</span>
         </Button>
       </div>
+
+      {r.canSwitchClient && (
+        <ClientSwitcher
+          open={switcherOpen}
+          onOpenChange={setSwitcherOpen}
+          clients={apiClients ?? []}
+          currentId={clientId}
+          onSelect={setClientId}
+          loading={clientsLoading}
+        />
+      )}
     </aside>
   );
 }

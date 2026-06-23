@@ -11,8 +11,7 @@ export function AppLayout() {
       style={{ gridTemplateColumns: "240px 1fr", gridTemplateRows: "56px 1fr" }}
     >
       <div className="row-span-2">
-        {/* onClientClick is a stub; full client-picker dialog is a follow-on task */}
-        <Sidebar onClientClick={() => undefined} />
+        <Sidebar />
       </div>
       <Topbar crumbs={crumbs} />
       <main className="overflow-auto p-6 md:p-8">
