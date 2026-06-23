@@ -17,6 +17,7 @@
       "@accounting-completed/contracts": ["packages/contracts/src/index.ts"],
       "@accounting-completed/db": ["packages/db/src/index.ts"],
       "@accounting-completed/domain": ["packages/domain/src/index.ts"],
+      "@accounting-completed/api-client": ["packages/api-client/src/index.ts"],
       "@accounting-completed/server": ["packages/server/src/index.ts"],
       "@accounting-completed/theme/*": ["packages/theme/src/*"],
       "@accounting-completed/ui": ["packages/ui/src/index.ts"],

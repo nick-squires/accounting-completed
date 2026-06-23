@@ -22,8 +22,11 @@ app.use("*", async (c, next) => {
 });
 app.onError(onError);
 app.use("*", requestContext);
-app.route("/api/auth", createAuthRoutes({ findByUsername: usersRepository.findByUsername }));
-app.route("/api/clients", createClientsRoutes({ list: clientsRepository.list }));
-app.get("/health", (c) => c.json({ status: "ok" }));
 
-export type AppType = typeof app;
+// Chain route mounts so the return type carries all typed routes for RPC inference
+const routes = app
+  .route("/api/auth", createAuthRoutes({ findByUsername: usersRepository.findByUsername }))
+  .route("/api/clients", createClientsRoutes({ list: clientsRepository.list }))
+  .get("/health", (c) => c.json({ status: "ok" }));
+
+export type AppType = typeof routes;
