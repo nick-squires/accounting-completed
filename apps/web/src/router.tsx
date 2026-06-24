@@ -7,6 +7,8 @@ import { DashboardPage } from "./routes/dashboard/DashboardPage";
 import { TransactionsPage } from "./routes/transactions/TransactionsPage";
 import { ProfitLossPage } from "./routes/profit-loss/ProfitLossPage";
 import { ClientsPage } from "./routes/clients/ClientsPage";
+import { ChartOfAccountsPage } from "./routes/chart-of-accounts/ChartOfAccountsPage";
+import { BalanceSheetPage } from "./routes/balance-sheet/BalanceSheetPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/login" replace /> },
@@ -22,11 +24,11 @@ export const router = createBrowserRouter([
           { path: "/bank-feeds", element: <StubPage />, handle: { title: "Bank feeds", crumbs: ["Bank feeds"] } },
           { path: "/reports/profit-loss", element: <ProfitLossPage />, handle: { title: "Profit & Loss", crumbs: ["Reports", "Profit & Loss"] } },
           { path: "/reports/profit-loss/print", element: <StubPage />, handle: { title: "Profit & Loss (print)", crumbs: ["Reports", "Profit & Loss", "Print"] } },
-          { path: "/reports/balance-sheet", element: <StubPage />, handle: { title: "Balance Sheet", crumbs: ["Reports", "Balance Sheet"] } },
+          { path: "/reports/balance-sheet", element: <BalanceSheetPage />, handle: { title: "Balance Sheet", crumbs: ["Reports", "Balance Sheet"] } },
           { path: "/reports/general-ledger", element: <StubPage />, handle: { title: "General Ledger", crumbs: ["Reports", "General Ledger"] } },
           { path: "/reports/general-journal", element: <StubPage />, handle: { title: "General Journal", crumbs: ["Reports", "General Journal"] } },
           { path: "/reports/approve", element: <StubPage />, handle: { title: "Approve reports", crumbs: ["Reports", "Approve"] } },
-          { path: "/setup/chart-of-accounts", element: <StubPage />, handle: { title: "Chart of accounts", crumbs: ["Setup", "Chart of accounts"] } },
+          { path: "/setup/chart-of-accounts", element: <ChartOfAccountsPage />, handle: { title: "Chart of accounts", crumbs: ["Setup", "Chart of accounts"] } },
           { path: "/setup/categories", element: <StubPage />, handle: { title: "Categories", crumbs: ["Setup", "Categories"] } },
           { path: "/setup/clients", element: <ClientsPage />, handle: { title: "Clients", crumbs: ["Setup", "Clients"] } },
           { path: "/setup/clients/new", element: <StubPage />, handle: { title: "Add client", crumbs: ["Setup", "Clients", "Add"] } },

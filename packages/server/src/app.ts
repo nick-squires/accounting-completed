@@ -6,7 +6,10 @@ import { requestContext } from "./middleware/request-context";
 import { createAuthRoutes } from "./auth/routes";
 import { createClientsRoutes } from "./clients/routes";
 import { createIncomeStatementRoutes } from "./income-statement/routes";
-import { clientsRepository, usersRepository, incomeStatementRepository } from "@accounting-completed/db";
+import { createTransactionsRoutes } from "./transactions/routes";
+import { createAccountsRoutes } from "./accounts/routes";
+import { createBalanceSheetRoutes } from "./balance-sheet/routes";
+import { clientsRepository, usersRepository, incomeStatementRepository, transactionsRepository, accountsRepository, balanceSheetRepository } from "@accounting-completed/db";
 
 export const app = new Hono();
 
@@ -32,6 +35,20 @@ const routes = app
     clientInFirm: incomeStatementRepository.clientInFirm,
     getTransactionsForYear: incomeStatementRepository.getTransactionsForYear,
     getAvailableYears: incomeStatementRepository.getAvailableYears,
+  }))
+  .route("/api/transactions", createTransactionsRoutes({
+    clientInFirm: incomeStatementRepository.clientInFirm,
+    listForYear: transactionsRepository.listForYear,
+    availableYears: transactionsRepository.availableYears,
+  }))
+  .route("/api/accounts", createAccountsRoutes({
+    clientInFirm: incomeStatementRepository.clientInFirm,
+    list: accountsRepository.list,
+  }))
+  .route("/api/balance-sheet", createBalanceSheetRoutes({
+    clientInFirm: incomeStatementRepository.clientInFirm,
+    accountBalances: balanceSheetRepository.accountBalances,
+    plAmountSum: balanceSheetRepository.plAmountSum,
   }))
   .get("/health", (c) => c.json({ status: "ok" }));
 
