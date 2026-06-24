@@ -1,9 +1,9 @@
 name: Deploy
 
-# Single Azure App Service per environment, each serving both the API and the web SPA.
-#   push to main           -> deploys accounting-completed-dev
-#   manual run (prd input) -> deploys accounting-completed-prd
-# The build is identical for both; only the publish target differs.
+# Builds a container image, pushes it to GitHub Container Registry, and updates the
+# matching Azure App Service (which runs in container mode).
+#   push to main           -> image :dev  -> accounting-completed-dev
+#   manual run (prd input) -> image :prd  -> accounting-completed-prd
 
 on:
   push:
@@ -16,43 +16,47 @@ on:
         options: [dev, prd]
         default: dev
 
+permissions:
+  contents: read
+  packages: write
+
 concurrency:
   group: deploy-${{ github.event.inputs.environment || 'dev' }}
   cancel-in-progress: false
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build:deploy # builds web + api, copies web into dist/apps/api/public
-      - name: Install production deps into the artifact
-        working-directory: dist/apps/api
-        run: npm install --omit=dev --no-audit --no-fund
-      - uses: actions/upload-artifact@v4
-        with:
-          name: app
-          path: dist/apps/api
-          include-hidden-files: true
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
 
-  deploy:
-    needs: build
+jobs:
+  build-deploy:
     runs-on: ubuntu-latest
     # GitHub Environment gates prd behind required reviewers (configure in repo settings).
     environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+
+      - name: Resolve target
+        id: t
+        run: echo "tag=${{ github.event.inputs.environment || 'dev' }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
-          name: app
-          path: app
-      - uses: azure/webapps-deploy@v3
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
         with:
-          app-name: accounting-completed-${{ github.event.inputs.environment || 'dev' }}
+          context: .
+          push: true
+          tags: ${{ env.IMAGE }}:${{ steps.t.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Update App Service to the new image
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: accounting-completed-${{ steps.t.outputs.tag }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: app
+          images: ${{ env.IMAGE }}:${{ steps.t.outputs.tag }}

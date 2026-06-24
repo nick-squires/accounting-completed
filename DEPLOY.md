@@ -1,66 +1,75 @@
 # Deployment
 
-This app deploys as a **single Azure App Service per environment**. One Node process
-serves both the JSON API (`/api/*`, `/health`) and the built web SPA (everything
-else, with `index.html` fallback for client-side routes). There is no separate
-frontend host and therefore no cross-origin setup.
+This app deploys as a **single container per environment** to Azure App Service for
+Containers. One Node process inside the container serves both the JSON API
+(`/api/*`, `/health`) and the built web SPA (everything else, with `index.html`
+fallback for client-side routes). No separate frontend host, no cross-origin setup.
 
-| Environment | App Service name |
-|---|---|
-| Dev | `accounting-completed-dev` |
-| Prod | `accounting-completed-prd` |
+> Why a container? App Service Linux extracts deploy packages onto a network-backed
+> file share, which is pathologically slow for `node_modules` (thousands of small
+> files) — zip/Oryx/OneDeploy all stall on it. A container ships `node_modules` in an
+> image layer (local FS), so the platform just pulls and runs. Deterministic and fast.
 
-## How the artifact is built
+| Environment | App Service | Image tag |
+|---|---|---|
+| Dev | `accounting-completed-dev` | `ghcr.io/nick-squires/accounting-completed:dev` |
+| Prod | `accounting-completed-prd` | `ghcr.io/nick-squires/accounting-completed:prd` |
 
-`pnpm build:deploy` produces a self-contained Node app in `dist/apps/api`:
+Both run on the shared Linux **B1** plan `accounting-completed-plan` (South Central
+US) in resource group `BrandedCloudAccounting`.
 
-- `main.js` — the esbuild-bundled server (workspace code + the generated Prisma client are inlined)
-- `package.json` — generated prod manifest listing the external deps (`@prisma/client`, `hono`, …)
-- `public/` — the built web SPA, copied from `dist/apps/web`
+## The image
 
-CI then runs `npm install --omit=dev` inside `dist/apps/api` to materialize
-`node_modules`, and ships the whole folder as the deploy package. The contents of
-`dist/apps/api` become the App Service's `/home/site/wwwroot`.
+`Dockerfile` is multi-stage: a `builder` stage runs `pnpm install` + `pnpm
+build:deploy` (web + api, web copied into `dist/apps/api/public`) and `npm install
+--omit=dev` for the artifact; a slim `runner` stage carries only `dist/apps/api` and
+runs `node main.js`. It listens on `PORT` (set to 8080 in the image); App Service maps
+to it via `WEBSITES_PORT=8080`.
 
-> Verified locally: the bundled artifact boots, serves the SPA + assets, falls back
-> to `index.html` for client routes, returns 404 for unknown `/api` paths, and
-> reaches Azure SQL through Prisma (a login attempt hits the DB and returns 401).
+> The build sets a placeholder `DATABASE_URL` so `prisma generate` (which reads
+> `prisma.config.ts`) can run without a DB — it never connects at generate time. The
+> runtime uses `MAC_DB_*` instead.
 
-## One-time Azure setup (per app)
+Build & run locally:
 
-1. **Create** a Linux App Service, runtime **Node 20 LTS**.
-2. **Startup command:** `node main.js`
-3. **App settings** (Configuration → Application settings) — set these in Azure, not in the repo:
-   - `JWT_SECRET` — ≥16 chars (validated at boot)
-   - `MAC_DB_SERVER`, `MAC_DB_PORT` (1433), `MAC_DB_NAME`, `MAC_DB_USER`, `MAC_DB_PASSWORD`
-   - `MAC_DB_ENCRYPT` = `true` (default; required for Azure SQL)
-   - `PORT` is injected by App Service — do not set it.
-   - `WEB_ROOT` defaults to `./public`; leave unset.
-   - `CORS_ORIGINS` not needed (same-origin). Set only if you later split the SPA out.
-4. **Azure SQL firewall:** enable "Allow Azure services and resources to access this
-   server" (or put the App Service on a VNet with a private endpoint).
-5. **Health check:** point App Service health check at `/health`.
+```sh
+docker build -t accounting-completed:local .
+docker run --rm --env-file .env -p 8090:8080 accounting-completed:local
+# curl localhost:8090/health -> {"status":"ok"};  /clients -> SPA shell
+```
 
 ## CI/CD (`.github/workflows/deploy.yml`)
 
-- **Push to `main`** → builds and deploys to **dev** automatically.
+- **Push to `main`** → builds & pushes `:dev`, updates **dev**.
 - **Manual run** (Actions → Deploy → Run workflow) → choose **dev** or **prd**.
 - Protect prod by adding required reviewers to a GitHub **Environment** named `prd`.
 
-### Required secrets
+CI pushes to ghcr.io using the built-in `GITHUB_TOKEN` (no extra secret). Updating the
+App Service image needs one secret per GitHub Environment:
 
-Each GitHub Environment (`dev`, `prd`) needs one secret:
+- `AZURE_WEBAPP_PUBLISH_PROFILE` — download from the App Service (Overview → Get
+  publish profile) and paste as the environment secret.
 
-- `AZURE_WEBAPP_PUBLISH_PROFILE` — download from the corresponding App Service
-  (Overview → Get publish profile) and paste as the environment secret.
+## App Service configuration (already applied; recorded here)
 
-## Local check of the production artifact
+Per app:
 
-```sh
-pnpm build:deploy
-cd dist/apps/api && npm install --omit=dev
-cp ../../../.env .env            # local only — App Service uses its own app settings
-PORT=3010 node main.js
-# curl http://localhost:3010/health   -> {"status":"ok"}
-# curl http://localhost:3010/clients  -> index.html (SPA fallback)
-```
+- **Container image:** `linuxFxVersion = DOCKER|ghcr.io/.../accounting-completed:<tag>`
+- **`WEBSITES_PORT`** = `8080`
+- **App settings:** `JWT_SECRET` (unique per env), `MAC_DB_SERVER/PORT/NAME/USER/PASSWORD`,
+  `MAC_DB_ENCRYPT=true`. `PORT` is provided by the platform.
+- **Registry pull credentials** (`DOCKER_REGISTRY_SERVER_URL/USERNAME/PASSWORD`) point
+  at ghcr.io. See the hardening note below.
+- **Health check** path: `/health`.
+- Azure SQL firewall already allows Azure services (`AllowAllWindowsAzureIps`).
+
+## Registry credential hardening (TODO)
+
+ghcr.io packages are **private by default**, so App Service pulls with credentials.
+These were initially set to a personal GitHub token to get running. Before relying on
+this long-term, switch to one of:
+
+- a **dedicated PAT** with only `read:packages`, stored as the registry password, or
+- making **just this package public** (the image holds app code + deps, no secrets —
+  `.env` is excluded — but evaluate whether the code should be public), or
+- an Azure **managed identity** with an ACR mirror if you later move off ghcr.

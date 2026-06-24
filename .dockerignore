@@ -1,0 +1,10 @@
+.git
+.claude
+**/node_modules
+dist
+tmp
+coverage
+.nx
+**/*.log
+.env
+.env.*
