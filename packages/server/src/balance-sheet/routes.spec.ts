@@ -22,7 +22,6 @@ const deps = {
   clientInFirm: async (id: number) => id === 2189,
   accountBalances: async () => balances,
   plAmountSum: async (_uid: number, start: Date | null) => (start === null ? -60 : -540),
-  // assets 800; liabilities 200; equityAccts 1000; RE 60; NI 540 → equity 1600? recompute:
 };
 
 function appWith() {
@@ -33,14 +32,16 @@ async function bearer(u: SessionUser) {
 }
 
 describe("balance sheet routes", () => {
-  it("returns a balanced statement for staff", async () => {
+  it("returns a statement with correct section totals for staff", async () => {
     const res = await appWith().request("/api/balance-sheet?clientId=2189&year=2025", { headers: { Authorization: await bearer(staff) } });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.meta.year).toBe(2025);
-    // assets 800; L 200; equityAccts 1000 + RE 60 + NI 540 = 1600 → L+E = 1800 ≠ 800 → balanced false here
-    expect(typeof body.balanced).toBe("boolean");
-    expect(body.totals.liabilitiesAndEquity).toBe(body.totals.liabilities + body.totals.equity);
+    expect(body.totals.assets).toBe(800);
+    expect(body.totals.liabilities).toBe(200);
+    expect(body.totals.equity).toBe(1600);
+    expect(body.totals.liabilitiesAndEquity).toBe(1800);
+    expect(body.balanced).toBe(false);
   });
 
   it("403s for non-staff", async () => {
@@ -53,6 +54,10 @@ describe("balance sheet routes", () => {
   });
   it("400s when year is missing", async () => {
     const res = await appWith().request("/api/balance-sheet?clientId=2189", { headers: { Authorization: await bearer(staff) } });
+    expect(res.status).toBe(400);
+  });
+  it("400s when clientId is missing", async () => {
+    const res = await appWith().request("/api/balance-sheet?year=2025", { headers: { Authorization: await bearer(staff) } });
     expect(res.status).toBe(400);
   });
 });

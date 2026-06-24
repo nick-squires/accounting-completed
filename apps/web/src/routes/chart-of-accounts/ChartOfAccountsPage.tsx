@@ -21,7 +21,7 @@ export function ChartOfAccountsPage() {
       {accountsQuery.isLoading && <div className="text-text-soft">Loading…</div>}
       {accountsQuery.isError && (
         <div className="text-destructive">
-          Failed to load. <button className="underline" onClick={() => accountsQuery.refetch()}>Retry</button>
+          Failed to load. <button type="button" className="underline" onClick={() => accountsQuery.refetch()}>Retry</button>
         </div>
       )}
       {accountsQuery.isSuccess && groups.length === 0 && (

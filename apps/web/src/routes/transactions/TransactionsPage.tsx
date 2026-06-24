@@ -119,7 +119,7 @@ export function TransactionsPage() {
             )}
             {txnsQuery.isError && (
               <tr><td colSpan={4} className="px-3 py-16 text-center text-destructive">
-                Failed to load. <button className="underline" onClick={() => txnsQuery.refetch()}>Retry</button>
+                Failed to load. <button type="button" className="underline" onClick={() => txnsQuery.refetch()}>Retry</button>
               </td></tr>
             )}
             {txnsQuery.isSuccess && rows.length === 0 && (

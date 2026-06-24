@@ -27,7 +27,7 @@ function SectionBlock({ section }: { section: BalanceSheetSection }) {
         </thead>
         <tbody>
           {section.groups.map((g) => (
-            <React.Fragment key={g.type}>
+            <React.Fragment key={`${section.key}-${g.type}`}>
               <tr className="bg-muted/30">
                 <td className="px-3 py-1.5 text-[11px] uppercase tracking-wider text-text-soft font-medium" colSpan={2}>
                   {g.type}
