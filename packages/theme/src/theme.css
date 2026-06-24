@@ -7,6 +7,9 @@
   --popover-foreground: 217 43% 10%;
   --primary: 202 85% 30%;
   --primary-foreground: 0 0% 100%;
+  --action: 214 44% 9%;
+  --action-foreground: 0 0% 100%;
+  --action-hover: 214 34% 16%;
   --secondary: 213 18% 95%;
   --secondary-foreground: 217 43% 10%;
   --muted: 216 17% 98%;
@@ -44,6 +47,9 @@
   --color-popover-foreground: hsl(var(--popover-foreground));
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-action: hsl(var(--action));
+  --color-action-foreground: hsl(var(--action-foreground));
+  --color-action-hover: hsl(var(--action-hover));
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
   --color-muted: hsl(var(--muted));
@@ -99,6 +105,9 @@ html, body {
 }
 
 ::selection { background: hsl(var(--accent)); color: hsl(var(--primary)); }
+
+/* Tailwind v4 Preflight resets button cursor to `default`; restore the pointer. */
+button:not(:disabled), [role="button"]:not([aria-disabled="true"]) { cursor: pointer; }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }

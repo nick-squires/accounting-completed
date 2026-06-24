@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLogin } from "@accounting-completed/api-client";
+import { Button } from "@accounting-completed/ui";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -115,14 +116,15 @@ export function LoginPage() {
               </p>
             )}
 
-            <button
+            <Button
               type="submit"
+              variant="primary"
               disabled={login.isPending}
-              className="h-11 mt-1 flex items-center justify-center gap-[9px] w-full text-[14px] font-semibold text-white bg-[#0d1622] rounded-[9px] cursor-pointer transition-colors duration-150 hover:bg-[#1b2735] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+              className="h-11 mt-1 w-full justify-center text-[14px] rounded-[9px] active:translate-y-px"
               style={{ fontFamily: "inherit" }}
             >
               {login.isPending ? "Signing in…" : "Sign in"}
-            </button>
+            </Button>
           </form>
         </div>
       </div>
