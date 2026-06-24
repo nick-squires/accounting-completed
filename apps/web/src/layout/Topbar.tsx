@@ -1,14 +1,15 @@
 import { Fragment } from "react";
-import type { Role } from "@accounting-completed/domain";
+import type { SessionUser } from "@accounting-completed/contracts";
+import { useMe } from "@accounting-completed/api-client";
 import { Button, Kbd } from "@accounting-completed/ui";
-import { useRole } from "../app/role-context";
+import { roleLabel } from "../app/user-display";
 import { ICONS } from "./icons";
 
-const ROLE_PILL: Record<Role, { label: string; cls: string }> = {
-  staff:    { label: "Firm staff",     cls: "bg-primary/15 text-primary" },
-  owner:    { label: "Business owner", cls: "bg-positive/15 text-positive" },
-  employee: { label: "Employee",       cls: "bg-info/15 text-info" },
-};
+function rolePillClass(roles: SessionUser["roles"] | undefined): string {
+  if (roles?.isEmployee) return "bg-info/15 text-info";
+  if (roles && !roles.isStaff) return "bg-positive/15 text-positive";
+  return "bg-primary/15 text-primary";
+}
 
 interface TopbarProps {
   crumbs?: string[];
@@ -16,8 +17,9 @@ interface TopbarProps {
 }
 
 export function Topbar({ crumbs = [], children }: TopbarProps) {
-  const { role } = useRole();
-  const pill = ROLE_PILL[role] ?? ROLE_PILL.staff;
+  const { data: me } = useMe();
+  const roleText = roleLabel(me?.roles);
+  const pillClass = rolePillClass(me?.roles);
 
   return (
     <div className="h-14 bg-card border-b border-border flex items-center px-6 gap-4 flex-shrink-0">
@@ -39,10 +41,12 @@ export function Topbar({ crumbs = [], children }: TopbarProps) {
         <span className="absolute right-2 top-1/2 -translate-y-1/2"><Kbd>⌘K</Kbd></span>
       </div>
       {/* Role chip */}
-      <div className={["inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11.5px] font-medium whitespace-nowrap", pill.cls].join(" ")}>
-        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
-        Viewing as {pill.label}
-      </div>
+      {roleText && (
+        <div className={["inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11.5px] font-medium whitespace-nowrap", pillClass].join(" ")}>
+          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+          {roleText}
+        </div>
+      )}
       {children}
       <Button variant="ghost" size="icon" title="Notifications">
         <span className="relative w-4 h-4 grid place-items-center">

@@ -19,9 +19,14 @@ describe("auth routes", () => {
     const { token, user } = await login.json();
     expect(typeof token).toBe("string");
     expect(user.username).toBe("demo");
+    expect(user.fullName).toBe("Demo");
+    expect(user.companyName).toBe("Demo Co");
     const me = await app.request("/api/auth/me", { headers: { authorization: `Bearer ${token}` } });
     expect(me.status).toBe(200);
-    expect((await me.json()).username).toBe("demo");
+    const meBody = await me.json();
+    expect(meBody.username).toBe("demo");
+    expect(meBody.fullName).toBe("Demo");
+    expect(meBody.companyName).toBe("Demo Co");
   });
   it("rejects /me without a token (401)", async () => {
     expect((await app.request("/api/auth/me")).status).toBe(401);

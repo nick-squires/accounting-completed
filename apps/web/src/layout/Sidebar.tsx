@@ -1,34 +1,29 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { CLIENTS, navForRole, ROLES } from "@accounting-completed/domain";
+import { navForRole } from "@accounting-completed/domain";
 import { useMe, useClients } from "@accounting-completed/api-client";
 import { Avatar, AvatarRound, Button } from "@accounting-completed/ui";
 import { useRole } from "../app/role-context";
 import { useClient } from "../app/client-context";
+import { displayName, deriveInitials, roleLabel } from "../app/user-display";
 import { ClientSwitcher } from "./ClientSwitcher";
 import { ICONS } from "./icons";
-
-function deriveInitials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-  const letters = words.slice(0, 2).map((w) => w[0] ?? "").join("");
-  return letters.toUpperCase() || "?";
-}
 
 export function Sidebar() {
   const { role } = useRole();
   const { clientId, setClientId } = useClient();
-  const r = ROLES[role] ?? ROLES.staff;
   const groups = navForRole(role);
 
   const { data: me } = useMe();
   const isStaff = me?.roles?.isStaff ?? false;
+  const canSwitchClient = isStaff;
   const { data: apiClients, isLoading: clientsLoading } = useClients({ enabled: isStaff });
 
   const [switcherOpen, setSwitcherOpen] = useState(false);
 
   // ⌘K / Ctrl+K toggles the client switcher for staff.
   useEffect(() => {
-    if (!r.canSwitchClient) return;
+    if (!canSwitchClient) return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -37,21 +32,30 @@ export function Sidebar() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [r.canSwitchClient]);
+  }, [canSwitchClient]);
 
-  // Once the live client list loads, if the current selection isn't a real
-  // client (initial state holds a mock id), default to the first real client.
+  // Once the live client list loads, default to the first real client if nothing
+  // valid is selected yet (initial state is null).
   useEffect(() => {
     if (!isStaff || !apiClients || apiClients.length === 0) return;
     if (!apiClients.some((c) => c.id === clientId)) setClientId(apiClients[0].id);
   }, [isStaff, apiClients, clientId, setClientId]);
 
-  // Display the live-selected client; fall back to mock CLIENTS for initial load / non-staff.
+  // Identity from the real session user.
+  const userName = displayName(me);
+  const firmLabel = me?.companyName?.trim() || "Cloud Accounting";
+  const footerInitials = deriveInitials(userName);
+  const footerTitle = roleLabel(me?.roles);
+
+  // Client panel: staff pick from the live list; non-staff show their own company.
   const selected = apiClients?.find((c) => c.id === clientId);
-  const localClient = CLIENTS.find((c) => c.id === clientId) ?? CLIENTS[0];
-  const clientName = selected?.name ?? localClient.name;
-  const clientSub = selected ? "Client" : localClient.sub;
-  const clientInitials = selected ? deriveInitials(selected.name) : localClient.initials;
+  const clientName = isStaff
+    ? selected?.name ?? (clientsLoading ? "Loading…" : "Select a client")
+    : me?.companyName?.trim() || userName || "—";
+  const clientSub = isStaff ? (selected ? "Client" : "") : "";
+  const clientInitials = isStaff
+    ? selected ? deriveInitials(selected.name) : "·"
+    : deriveInitials(me?.companyName?.trim() || userName);
 
   return (
     <aside className="w-[240px] flex flex-col bg-sidebar border-r border-sidebar-border overflow-hidden">
@@ -61,13 +65,13 @@ export function Sidebar() {
         <div className="leading-tight">
           <div className="font-semibold text-[15px] tracking-tight">Accounting Completed</div>
           <div className="text-[10px] text-text-soft tracking-wider uppercase">
-            {r.firm ?? "Cloud Accounting"}
+            {firmLabel}
           </div>
         </div>
       </div>
 
       {/* Client switcher / brand panel */}
-      {r.canSwitchClient ? (
+      {canSwitchClient ? (
         <button
           onClick={() => setSwitcherOpen(true)}
           type="button"
@@ -112,19 +116,10 @@ export function Sidebar() {
                   ].join(" ")
                 }
               >
-                {({ isActive }) => (
-                  <>
-                    <span className="w-4 h-4 flex-shrink-0 grid place-items-center">
-                      {ICONS[item.icon] ?? ICONS.reports}
-                    </span>
-                    <span className="flex-1">{item.label}</span>
-                    {item.count !== undefined && (
-                      <span className={["text-[11px] tnum font-mono", isActive ? "text-primary" : "text-text-soft"].join(" ")}>
-                        {item.count}
-                      </span>
-                    )}
-                  </>
-                )}
+                <span className="w-4 h-4 flex-shrink-0 grid place-items-center">
+                  {ICONS[item.icon] ?? ICONS.reports}
+                </span>
+                <span className="flex-1">{item.label}</span>
               </NavLink>
             ))}
           </div>
@@ -150,17 +145,17 @@ export function Sidebar() {
 
       {/* Footer / user */}
       <div className="border-t border-border/60 px-4 py-3 flex items-center gap-3 flex-shrink-0">
-        <AvatarRound size={28}>{r.user.initials}</AvatarRound>
+        <AvatarRound size={28}>{footerInitials}</AvatarRound>
         <div className="flex-1 min-w-0 leading-tight">
-          <div className="text-[13px] font-medium truncate">{r.user.name}</div>
-          <div className="text-[11px] text-text-soft truncate">{r.user.role}</div>
+          <div className="text-[13px] font-medium truncate">{userName || "—"}</div>
+          <div className="text-[11px] text-text-soft truncate">{footerTitle}</div>
         </div>
         <Button variant="ghost" size="icon-sm" title="Notifications">
           <span className="w-4 h-4 grid place-items-center">{ICONS.bell}</span>
         </Button>
       </div>
 
-      {r.canSwitchClient && (
+      {canSwitchClient && (
         <ClientSwitcher
           open={switcherOpen}
           onOpenChange={setSwitcherOpen}

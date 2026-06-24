@@ -10,7 +10,9 @@ import { requireAuth } from "../middleware/request-context";
 export interface AuthDeps { findByUsername(username: string): Promise<UserRow | null>; }
 
 const toSessionUser = (u: UserRow): SessionUser => ({
-  userId: u.UserId, username: u.UserName ?? "", firmClientId: u.Client_Id ?? null,
+  userId: u.UserId, username: u.UserName ?? "",
+  fullName: u.Full_Name?.trim() || null, companyName: u.Company_Name?.trim() || null,
+  firmClientId: u.Client_Id ?? null,
   roles: { isStaff: !!u.Is_Staff, isCustomer: !!u.Is_Customer, isEmployee: !!u.Is_Employee, isAdmin: !!u.Is_Admin },
 });
 

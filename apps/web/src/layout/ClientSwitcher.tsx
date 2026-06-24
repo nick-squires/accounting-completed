@@ -12,7 +12,7 @@ interface ClientSwitcherProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clients: ClientSummary[];
-  currentId: string;
+  currentId: string | null;
   onSelect: (id: string) => void;
   loading?: boolean;
 }
