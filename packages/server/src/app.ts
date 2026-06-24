@@ -4,11 +4,12 @@ import { logger as pinoLogger } from "./logger";
 import { onError } from "./middleware/error";
 import { requestContext } from "./middleware/request-context";
 import { createAuthRoutes } from "./auth/routes";
+import { createActivityRoutes } from "./activity/routes";
 import { createClientsRoutes } from "./clients/routes";
 import { createIncomeStatementRoutes } from "./income-statement/routes";
 import { createTransactionsRoutes } from "./transactions/routes";
 import { createAccountsRoutes } from "./accounts/routes";
-import { clientsRepository, usersRepository, incomeStatementRepository, transactionsRepository, accountsRepository } from "@accounting-completed/db";
+import { clientsRepository, usersRepository, incomeStatementRepository, transactionsRepository, accountsRepository, activityRepository } from "@accounting-completed/db";
 
 export const app = new Hono();
 
@@ -44,6 +45,7 @@ const routes = app
     clientInFirm: incomeStatementRepository.clientInFirm,
     list: accountsRepository.list,
   }))
+  .route("/api/activity", createActivityRoutes({ recent: activityRepository.recent }))
   .get("/health", (c) => c.json({ status: "ok" }));
 
 export type AppType = typeof routes;
