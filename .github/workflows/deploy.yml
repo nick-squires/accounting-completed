@@ -1,0 +1,58 @@
+name: Deploy
+
+# Single Azure App Service per environment, each serving both the API and the web SPA.
+#   push to main           -> deploys accounting-completed-dev
+#   manual run (prd input) -> deploys accounting-completed-prd
+# The build is identical for both; only the publish target differs.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [dev, prd]
+        default: dev
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'dev' }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:deploy # builds web + api, copies web into dist/apps/api/public
+      - name: Install production deps into the artifact
+        working-directory: dist/apps/api
+        run: npm install --omit=dev --no-audit --no-fund
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: dist/apps/api
+          include-hidden-files: true
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # GitHub Environment gates prd behind required reviewers (configure in repo settings).
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app
+          path: app
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: accounting-completed-${{ github.event.inputs.environment || 'dev' }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: app

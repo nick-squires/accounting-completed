@@ -10,7 +10,8 @@
     "build": "nx run-many -t build",
     "test": "nx run-many -t test",
     "lint": "nx run-many -t lint",
-    "dev:api": "nx run api:serve"
+    "dev:api": "nx run api:serve",
+    "build:deploy": "nx build web && nx build api && node tools/copy-web-into-api.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.14.5",
