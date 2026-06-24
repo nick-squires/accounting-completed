@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// NOTE: "client" here = a CUSTOMER of the firm (a `Users` row with Is_Customer),
+// NOT the firm tenant. The firm is `Client_Id`/`firmClientId`. See ../DOMAIN.md.
+
 export const clientStatusSchema = z.enum(["verified", "unverified"]);
 export type ClientStatus = z.infer<typeof clientStatusSchema>;
 

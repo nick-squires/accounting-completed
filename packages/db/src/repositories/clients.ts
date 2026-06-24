@@ -1,5 +1,9 @@
 import { prisma } from "../client";
 
+// "client" here = a CUSTOMER of the firm (a `Users` row with Is_Customer), scoped to
+// the firm via `Client_Id`. The firm tenant itself is `Client_Id`/`firmClientId`.
+// Active = Is_Active && !Is_Locked. See packages/contracts/DOMAIN.md.
+
 export interface ClientRow {
   UserId: number;
   Company_Name: string | null;
