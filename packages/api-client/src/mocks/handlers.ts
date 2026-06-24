@@ -4,6 +4,8 @@ import type { SessionUser } from "@accounting-completed/contracts";
 export const TEST_USER: SessionUser = {
   userId: 1,
   username: "testuser",
+  fullName: "Test User",
+  companyName: "Test Firm",
   firmClientId: null,
   roles: { isStaff: true, isCustomer: false, isEmployee: false, isAdmin: false },
 };

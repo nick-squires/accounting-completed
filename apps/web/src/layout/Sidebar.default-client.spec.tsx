@@ -9,6 +9,8 @@ import { Sidebar } from "./Sidebar";
 const staffUser = {
   userId: 1,
   username: "staff",
+  fullName: "Staff User",
+  companyName: "Demo Firm",
   firmClientId: 69,
   roles: { isStaff: true, isCustomer: false, isEmployee: false, isAdmin: false },
 };
@@ -37,8 +39,10 @@ function renderSidebar() {
 describe("Sidebar default client", () => {
   it("defaults to the first real client once the staff list loads", async () => {
     renderSidebar();
-    // Switches from the mock default to the first API client (sorted: "Amos, Jim").
+    // From the null initial selection, defaults to the first API client.
     await waitFor(() => expect(screen.getByText("Amos, Jim")).toBeTruthy());
-    expect(screen.queryByText("Atlas Coffee Roasters")).toBeNull();
+    // The pre-load placeholders must no longer be showing.
+    expect(screen.queryByText("Loading…")).toBeNull();
+    expect(screen.queryByText("Select a client")).toBeNull();
   });
 });

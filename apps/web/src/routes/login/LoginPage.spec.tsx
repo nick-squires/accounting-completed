@@ -60,6 +60,18 @@ describe("LoginPage", () => {
     expect(screen.getByRole("button", { name: /sign in/i })).toBeTruthy();
   });
 
+  it("starts with an empty email field (no demo prefill)", () => {
+    renderLogin();
+    expect((screen.getByLabelText(/email/i) as HTMLInputElement).value).toBe("");
+  });
+
+  it("does not render fabricated marketing content", () => {
+    renderLogin();
+    expect(screen.queryByText(/Adelina Costa/)).toBeNull();
+    expect(screen.queryByText(/v6\.2/)).toBeNull();
+    expect(screen.queryByText("Auto-categorize")).toBeNull();
+  });
+
   it("navigates to /dashboard on successful login", async () => {
     renderLogin();
 
