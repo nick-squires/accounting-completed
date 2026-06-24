@@ -5,3 +5,4 @@ export { useIncomeStatement, useIncomeStatementYears } from "./use-income-statem
 export { useTransactions, useTransactionsYears } from "./use-transactions";
 export { useAccounts } from "./use-accounts";
 export { useActivity } from "./use-activity";
+export { useBalanceSheet } from "./use-balance-sheet";
