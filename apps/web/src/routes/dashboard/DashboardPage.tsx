@@ -5,7 +5,7 @@ import {
   Button,
   DataTable,
 } from "@accounting-completed/ui";
-import { useMe, useClients, useActivity } from "@accounting-completed/api-client";
+import { useMe, useClients } from "@accounting-completed/api-client";
 import { ICONS } from "../../layout/icons";
 import { firstName } from "../../app/user-display";
 import { compactClientColumns } from "../clients/clientColumns";
@@ -27,24 +27,11 @@ function greetingFor(hour: number): string {
   return "Good evening";
 }
 
-/* ---------- Relative time ------------------------------------------------ */
-function relTime(iso: string): string {
-  const then = new Date(iso).getTime();
-  const mins = Math.round((Date.now() - then) / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.round(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.round(hrs / 24);
-  return `${days}d ago`;
-}
-
 /* ---------- Page --------------------------------------------------------- */
 export function DashboardPage() {
   const { data: me } = useMe();
   const isStaff = me?.roles?.isStaff ?? false;
   const { data: clients, isLoading: clientsLoading } = useClients({ enabled: isStaff });
-  const { data: activity } = useActivity({ enabled: isStaff, limit: 8 });
 
   const now = new Date();
   const greeting = greetingFor(now.getHours());
@@ -120,22 +107,7 @@ export function DashboardPage() {
             <CardHeader className="flex-row items-center justify-between">
               <CardTitle>Activity</CardTitle>
             </CardHeader>
-            {activity && activity.length > 0 ? (
-              <ul className="divide-y divide-border">
-                {activity.map((item) => (
-                  <li key={item.id} className="px-5 py-3">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-[13px] font-medium text-foreground">{item.action}</span>
-                      <span className="text-[11.5px] text-text-soft whitespace-nowrap">{relTime(item.when)}</span>
-                    </div>
-                    {item.detail && <div className="text-[12.5px] text-text-soft mt-0.5">{item.detail}</div>}
-                    {item.actor && <div className="text-[11.5px] text-text-soft mt-0.5">by {item.actor}</div>}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState title="No recent activity" sub="Recent changes across your clients will appear here." />
-            )}
+            <EmptyState title="No recent activity" sub="Recent changes across your clients will appear here." />
           </Card>
         </div>
       </div>

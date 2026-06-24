@@ -4,13 +4,12 @@ import { logger as pinoLogger } from "./logger";
 import { onError } from "./middleware/error";
 import { requestContext } from "./middleware/request-context";
 import { createAuthRoutes } from "./auth/routes";
-import { createActivityRoutes } from "./activity/routes";
 import { createClientsRoutes } from "./clients/routes";
 import { createIncomeStatementRoutes } from "./income-statement/routes";
 import { createTransactionsRoutes } from "./transactions/routes";
 import { createAccountsRoutes } from "./accounts/routes";
 import { createBalanceSheetRoutes } from "./balance-sheet/routes";
-import { clientsRepository, usersRepository, incomeStatementRepository, transactionsRepository, accountsRepository, activityRepository, balanceSheetRepository } from "@accounting-completed/db";
+import { clientsRepository, usersRepository, incomeStatementRepository, transactionsRepository, accountsRepository, balanceSheetRepository } from "@accounting-completed/db";
 
 export const app = new Hono();
 
@@ -46,7 +45,6 @@ const routes = app
     clientInFirm: incomeStatementRepository.clientInFirm,
     list: accountsRepository.list,
   }))
-  .route("/api/activity", createActivityRoutes({ recent: activityRepository.recent }))
   .route("/api/balance-sheet", createBalanceSheetRoutes({
     clientInFirm: incomeStatementRepository.clientInFirm,
     accountBalances: balanceSheetRepository.accountBalances,

@@ -21,7 +21,6 @@ const clients = [
 const server = setupServer(
   http.get("*/api/auth/me", () => HttpResponse.json(staffUser)),
   http.get("*/api/clients", () => HttpResponse.json(clients)),
-  http.get("*/api/activity", () => HttpResponse.json({ items: [] })),
 );
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -39,6 +38,7 @@ describe("DashboardPage", () => {
   it("greets the real logged-in user", async () => {
     renderPage();
     await waitFor(() => expect(screen.getByText(/Jordan/)).toBeTruthy());
+    // The old hardcoded greeting must be gone.
     expect(screen.queryByText(/Good morning, Scott/)).toBeNull();
   });
 
@@ -48,26 +48,10 @@ describe("DashboardPage", () => {
     expect(screen.getByText("Globex Logistics")).toBeTruthy();
   });
 
-  it("shows honest empty states for deadlines and an empty activity feed", () => {
+  it("shows honest empty states for unbuilt widgets", () => {
     renderPage();
     expect(screen.getByText("No upcoming deadlines")).toBeTruthy();
     expect(screen.getByText("No recent activity")).toBeTruthy();
-  });
-
-  it("renders the activity feed when there are items", async () => {
-    server.use(
-      http.get("*/api/activity", () =>
-        HttpResponse.json({
-          items: [
-            { id: 7, when: "2025-05-01T12:00:00.000Z", actor: "Jane", action: "Recategorized", detail: "Office Depot: Uncategorized → Office Supplies" },
-          ],
-        }),
-      ),
-    );
-    renderPage();
-    await waitFor(() => expect(screen.getByText("Recategorized")).toBeTruthy());
-    expect(screen.getByText("Office Depot: Uncategorized → Office Supplies")).toBeTruthy();
-    expect(screen.queryByText("No recent activity")).toBeNull();
   });
 
   it("does not render the fabricated KPI tiles", () => {
