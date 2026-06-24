@@ -4,7 +4,16 @@ import { createClientsRoutes } from "./routes";
 import type { SessionUser } from "@accounting-completed/contracts";
 import type { ClientRow } from "@accounting-completed/db";
 
-const fakeRow: ClientRow = { UserId: 2189, Company_Name: "Demo Co", Full_Name: "x" };
+const fakeRow: ClientRow = {
+  UserId: 2189,
+  Company_Name: "Demo Co",
+  Full_Name: "Last, First",
+  Email_Address: "demo@co.test",
+  City: "Austin",
+  State: "TX",
+  Created_Date: new Date("2020-01-15T00:00:00.000Z"),
+  Is_Verified: true,
+};
 const fakeList = async () => [fakeRow];
 
 function buildApp(user: SessionUser | null) {
@@ -35,7 +44,16 @@ describe("GET /api/clients", () => {
     const app = buildApp(staffUser);
     const res = await app.request("/api/clients");
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual([{ id: "2189", name: "Demo Co" }]);
+    expect(await res.json()).toEqual([
+      {
+        id: "2189",
+        name: "Demo Co",
+        email: "demo@co.test",
+        location: "Austin, TX",
+        createdAt: "2020-01-15T00:00:00.000Z",
+        status: "verified",
+      },
+    ]);
   });
 
   it("returns 403 for a non-staff user", async () => {

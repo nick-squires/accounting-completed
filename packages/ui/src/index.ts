@@ -10,3 +10,4 @@ export * from "./components/ui/popover";
 export * from "./components/ui/command";
 export * from "./components/ui/kbd";
 export * from "./components/ui/sparkline";
+export * from "./components/ui/data-table";

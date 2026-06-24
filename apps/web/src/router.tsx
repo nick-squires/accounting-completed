@@ -6,6 +6,7 @@ import { LoginPage } from "./routes/login/LoginPage";
 import { DashboardPage } from "./routes/dashboard/DashboardPage";
 import { TransactionsPage } from "./routes/transactions/TransactionsPage";
 import { ProfitLossPage } from "./routes/profit-loss/ProfitLossPage";
+import { ClientsPage } from "./routes/clients/ClientsPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/login" replace /> },
@@ -27,7 +28,7 @@ export const router = createBrowserRouter([
           { path: "/reports/approve", element: <StubPage />, handle: { title: "Approve reports", crumbs: ["Reports", "Approve"] } },
           { path: "/setup/chart-of-accounts", element: <StubPage />, handle: { title: "Chart of accounts", crumbs: ["Setup", "Chart of accounts"] } },
           { path: "/setup/categories", element: <StubPage />, handle: { title: "Categories", crumbs: ["Setup", "Categories"] } },
-          { path: "/setup/clients", element: <StubPage />, handle: { title: "Clients", crumbs: ["Setup", "Clients"] } },
+          { path: "/setup/clients", element: <ClientsPage />, handle: { title: "Clients", crumbs: ["Setup", "Clients"] } },
           { path: "/setup/clients/new", element: <StubPage />, handle: { title: "Add client", crumbs: ["Setup", "Clients", "Add"] } },
           { path: "/setup/staff", element: <StubPage />, handle: { title: "Staff & roles", crumbs: ["Setup", "Staff & roles"] } },
           { path: "/settings", element: <StubPage />, handle: { title: "Settings", crumbs: ["Settings"] } },

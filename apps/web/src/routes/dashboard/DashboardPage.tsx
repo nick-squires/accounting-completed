@@ -2,14 +2,13 @@ import {
   Card,
   CardHeader,
   CardTitle,
-  CardFooter,
   Button,
-  Avatar,
+  DataTable,
 } from "@accounting-completed/ui";
 import { useMe, useClients } from "@accounting-completed/api-client";
-import type { ClientSummary } from "@accounting-completed/contracts";
 import { ICONS } from "../../layout/icons";
 import { firstName } from "../../app/user-display";
+import { compactClientColumns } from "../clients/clientColumns";
 
 /* ---------- Empty state -------------------------------------------------- */
 function EmptyState({ title, sub }: { title: string; sub: string }) {
@@ -17,21 +16,6 @@ function EmptyState({ title, sub }: { title: string; sub: string }) {
     <div className="px-5 py-10 text-center">
       <div className="text-foreground text-[13.5px] font-medium">{title}</div>
       <div className="text-[12.5px] text-text-soft mt-1">{sub}</div>
-    </div>
-  );
-}
-
-/* ---------- Client row --------------------------------------------------- */
-function ClientRow({ c }: { c: ClientSummary }) {
-  return (
-    <div className="flex items-center gap-3 px-4 h-14 border-b border-border/60 last:border-b-0 hover:bg-muted/60 transition-colors group">
-      <Avatar name={c.name} size={32} />
-      <div className="flex-1 min-w-0">
-        <span className="font-medium truncate">{c.name}</span>
-      </div>
-      <span className="text-text-soft opacity-0 group-hover:opacity-100 transition-opacity">
-        {ICONS.chevRight}
-      </span>
     </div>
   );
 }
@@ -88,7 +72,7 @@ export function DashboardPage() {
       {/* Two-column main */}
       <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 380px" }}>
         {/* Left: Clients */}
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>Your clients</CardTitle>
             <a href="/setup/clients" className="text-[12px] text-primary hover:underline">
@@ -96,24 +80,16 @@ export function DashboardPage() {
             </a>
           </CardHeader>
 
-          <div className="divide-y divide-border/60">
-            {clientsLoading ? (
-              <div className="p-10 text-center text-muted-foreground text-[13.5px]">Loading clients…</div>
-            ) : clientCount === 0 ? (
-              <EmptyState title="No clients yet" sub="Clients you manage will appear here." />
-            ) : (
-              (clients ?? []).map((c) => <ClientRow key={c.id} c={c} />)
-            )}
-          </div>
-
-          {clientCount > 0 && (
-            <CardFooter>
-              <span className="text-[12.5px] text-muted-foreground">
-                <span className="font-mono text-foreground">{clientCount}</span>{" "}
-                {clientCount === 1 ? "client" : "clients"}
-              </span>
-            </CardFooter>
-          )}
+          <DataTable
+            data={clients ?? []}
+            columns={compactClientColumns}
+            getRowKey={(c) => c.id}
+            pageSize={6}
+            searchPlaceholder="Search clients…"
+            isLoading={isStaff && clientsLoading}
+            loadingState="Loading clients…"
+            emptyState={<EmptyState title="No clients yet" sub="Clients you manage will appear here." />}
+          />
         </Card>
 
         {/* Right column */}
