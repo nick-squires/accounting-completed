@@ -7,7 +7,8 @@ import { createAuthRoutes } from "./auth/routes";
 import { createClientsRoutes } from "./clients/routes";
 import { createIncomeStatementRoutes } from "./income-statement/routes";
 import { createTransactionsRoutes } from "./transactions/routes";
-import { clientsRepository, usersRepository, incomeStatementRepository, transactionsRepository } from "@accounting-completed/db";
+import { createAccountsRoutes } from "./accounts/routes";
+import { clientsRepository, usersRepository, incomeStatementRepository, transactionsRepository, accountsRepository } from "@accounting-completed/db";
 
 export const app = new Hono();
 
@@ -38,6 +39,10 @@ const routes = app
     clientInFirm: incomeStatementRepository.clientInFirm,
     listForYear: transactionsRepository.listForYear,
     availableYears: transactionsRepository.availableYears,
+  }))
+  .route("/api/accounts", createAccountsRoutes({
+    clientInFirm: incomeStatementRepository.clientInFirm,
+    list: accountsRepository.list,
   }))
   .get("/health", (c) => c.json({ status: "ok" }));
 
