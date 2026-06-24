@@ -6,7 +6,8 @@ import { requestContext } from "./middleware/request-context";
 import { createAuthRoutes } from "./auth/routes";
 import { createClientsRoutes } from "./clients/routes";
 import { createIncomeStatementRoutes } from "./income-statement/routes";
-import { clientsRepository, usersRepository, incomeStatementRepository } from "@accounting-completed/db";
+import { createTransactionsRoutes } from "./transactions/routes";
+import { clientsRepository, usersRepository, incomeStatementRepository, transactionsRepository } from "@accounting-completed/db";
 
 export const app = new Hono();
 
@@ -32,6 +33,11 @@ const routes = app
     clientInFirm: incomeStatementRepository.clientInFirm,
     getTransactionsForYear: incomeStatementRepository.getTransactionsForYear,
     getAvailableYears: incomeStatementRepository.getAvailableYears,
+  }))
+  .route("/api/transactions", createTransactionsRoutes({
+    clientInFirm: incomeStatementRepository.clientInFirm,
+    listForYear: transactionsRepository.listForYear,
+    availableYears: transactionsRepository.availableYears,
   }))
   .get("/health", (c) => c.json({ status: "ok" }));
 
