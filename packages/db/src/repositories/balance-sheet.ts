@@ -17,7 +17,7 @@ export const balanceSheetRepository = {
   // Per-account raw sum of active txns posted before asOf, for balance-sheet accounts.
   async accountBalances(userId: number, asOf: Date): Promise<BsAccountBalance[]> {
     const accounts = await prisma.accounts.findMany({
-      where: { UserId: userId, Is_Active: true, Account_Type: { in: BS_TYPES } },
+      where: { UserId: userId, Account_Type: { in: BS_TYPES } },
       select: { Account_Code: true, Account_Name: true, Account_Type: true },
     });
     if (accounts.length === 0) return [];
