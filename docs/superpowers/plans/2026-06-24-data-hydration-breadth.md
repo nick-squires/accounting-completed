@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Package manager / runner:** pnpm + Nx. Test a project with `pnpm nx test <project>` (projects: `server`, `db`, `contracts`, `api-client`, `web`). Filter to one suite with `pnpm nx test <project> -- -t "<describe text>"`. Build/typecheck with `pnpm nx build <project>`.
+- **Package manager / runner:** pnpm + Nx. Test a project with `pnpm nx test <project>` (projects: `server`, `db`, `contracts`, `api-client`, `web`). Filter to one suite with `pnpm nx test <project> -- -t "<describe text>"`. **Type-check** any project with `pnpm nx typecheck <project>` (this is the type-safety gate — the library projects `server`/`db`/`contracts`/`api-client` have **no `build` target**, only `typecheck`; `nx build` exists solely for `web` and `api` and does **not** run `tsc`). Always typecheck after touching cross-package types or RPC calls; `nx build web` alone will not catch type errors.
 - **Firm-scope guard:** every per-client route must call `requireStaff` and reject a client not in the caller's firm with **HTTP 404** (not 403), reusing the existing `incomeStatementRepository.clientInFirm(userId, firmClientId)` guard wired in `app.ts`.
 - **Domain vocabulary:** "client" in the API/UI = a *customer of the firm* (a `Users` row with `Is_Customer`), scoped by that customer's `UserId`. The firm tenant is `firmClientId` / `Client_Id`. See `packages/contracts/DOMAIN.md`. Per-client data is queried by the customer's `UserId`; firm-wide data by `firmClientId`.
 - **Money:** amounts come from Prisma `Decimal`; convert with `Number(x ?? 0)`. Zod money fields use `z.number().finite()` to reject NaN/Infinity.
@@ -476,8 +476,8 @@ Expected: PASS (5 cases).
 
 - [ ] **Step 12: Verify contracts + full server suite + typecheck**
 
-Run: `pnpm nx test contracts` then `pnpm nx test server` then `pnpm nx build server`
-Expected: all PASS / build succeeds.
+Run: `pnpm nx test contracts` then `pnpm nx test server` then `pnpm nx typecheck contracts` then `pnpm nx typecheck server`
+Expected: all PASS / typecheck succeeds (no `tsc` errors).
 
 - [ ] **Step 13: Commit**
 
@@ -498,6 +498,7 @@ git commit -m "feat(transactions): API + repository for client transaction ledge
 - Create: `apps/web/src/routes/transactions/filter.ts`
 - Test: `apps/web/src/routes/transactions/filter.spec.ts`
 - Modify: `apps/web/src/routes/transactions/TransactionsPage.tsx`
+- Modify (rewrite): `apps/web/src/routes/transactions/TransactionsPage.spec.tsx` — **this spec already exists** and asserts the old empty-state copy and a now-deleted "Nothing selected" detail panel; it is part of `nx test web` and WILL fail unless rewritten.
 
 **Interfaces:**
 - Consumes: `transactionsResponseSchema`, `transactionsYearsSchema`, type `Transaction` from contracts; `apiClient` from `./client`; `useClient` from `../../app/client-context`; `useMe`, `useClients` (already used by the page).
@@ -789,17 +790,99 @@ export function TransactionsPage() {
 }
 ```
 
-- [ ] **Step 7: Verify web tests + typecheck/build**
+- [ ] **Step 7: Rewrite the existing page spec for the hydrated page**
 
-Run: `pnpm nx test web` then `pnpm nx build web`
-Expected: PASS / build succeeds.
+The existing `apps/web/src/routes/transactions/TransactionsPage.spec.tsx` asserts the old empty-state copy and the deleted "Nothing selected" detail panel, and does not mock the new `/api/transactions/years` + `/api/transactions` endpoints. Replace its entire contents with:
 
-- [ ] **Step 8: Commit**
+```tsx
+import { describe, it, expect, beforeAll, afterEach, afterAll } from "vitest";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { setupServer } from "msw/node";
+import { http, HttpResponse } from "msw";
+import { ClientContext } from "../../app/client-context";
+import { TransactionsPage } from "./TransactionsPage";
+
+const staffUser = {
+  userId: 1,
+  username: "jlee",
+  fullName: "Jordan Lee",
+  companyName: "Northwind Books",
+  firmClientId: 69,
+  roles: { isStaff: true, isCustomer: false, isEmployee: false, isAdmin: false },
+};
+const clients = [{ id: "2243", name: "Acme Roasters" }];
+const txnResponse = {
+  meta: { clientId: 2243, year: 2025, generatedAt: "2025-06-01T00:00:00.000Z" },
+  transactions: [
+    { id: 1, postedDate: "2025-03-04T00:00:00.000Z", payee: "Office Depot", memo: null, amount: -42.5, category: null, checkNumber: null, account: "Checking", status: "review" },
+    { id: 2, postedDate: "2025-03-05T00:00:00.000Z", payee: "Acme Sales", memo: null, amount: 1200, category: "Revenue", checkNumber: null, account: "Checking", status: "categorized" },
+  ],
+};
+
+const server = setupServer(
+  http.get("*/api/auth/me", () => HttpResponse.json(staffUser)),
+  http.get("*/api/clients", () => HttpResponse.json(clients)),
+  http.get("*/api/transactions/years", () => HttpResponse.json({ years: [2025] })),
+  http.get("*/api/transactions", () => HttpResponse.json(txnResponse)),
+);
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+
+function renderPage(clientId: string | null = "2243") {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={qc}>
+      <ClientContext.Provider value={{ clientId, setClientId: () => undefined }}>
+        <TransactionsPage />
+      </ClientContext.Provider>
+    </QueryClientProvider>,
+  );
+}
+
+describe("TransactionsPage", () => {
+  it("renders the page header and status tabs", () => {
+    renderPage();
+    expect(screen.getByRole("heading", { name: "Transactions" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "For review" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Categorized" })).toBeTruthy();
+  });
+
+  it("shows the real selected client name once it loads", async () => {
+    renderPage("2243");
+    await waitFor(() => expect(screen.getByText("Acme Roasters")).toBeTruthy());
+  });
+
+  it("renders real transactions for the default 'For review' tab", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Office Depot")).toBeTruthy());
+    // A categorized row is hidden on the review tab.
+    expect(screen.queryByText("Acme Sales")).toBeNull();
+  });
+
+  it("switches tabs to show categorized transactions", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Office Depot")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Categorized" }));
+    await waitFor(() => expect(screen.getByText("Acme Sales")).toBeTruthy());
+    expect(screen.queryByText("Office Depot")).toBeNull();
+  });
+});
+```
+
+- [ ] **Step 8: Verify web tests + typecheck/build**
+
+Run: `pnpm nx test web` then `pnpm nx typecheck web` then `pnpm nx build web`
+Expected: PASS (including the rewritten `TransactionsPage` spec) / typecheck + build succeed.
+
+- [ ] **Step 9: Commit**
 
 ```bash
 git add packages/api-client/src/use-transactions.ts packages/api-client/src/index.ts \
   apps/web/src/routes/transactions/filter.ts apps/web/src/routes/transactions/filter.spec.ts \
-  apps/web/src/routes/transactions/TransactionsPage.tsx
+  apps/web/src/routes/transactions/TransactionsPage.tsx \
+  apps/web/src/routes/transactions/TransactionsPage.spec.tsx
 git commit -m "feat(web): hydrate Transactions page with real ledger data"
 ```
 
@@ -1036,10 +1119,10 @@ describe("accounts routes", () => {
 Run: `pnpm nx test server -- -t "accounts routes"`
 Expected: PASS (4 cases). (TDD note: the route was written in Step 3; if the executor prefers strict red-first, temporarily comment out the `.route("/api/accounts" ...)` body — but since the route already exists, expect PASS here.)
 
-- [ ] **Step 7: Verify contracts + server build**
+- [ ] **Step 7: Verify contracts + server typecheck**
 
-Run: `pnpm nx test contracts` then `pnpm nx build server`
-Expected: PASS / build succeeds.
+Run: `pnpm nx test contracts` then `pnpm nx typecheck contracts` then `pnpm nx typecheck server`
+Expected: PASS / typecheck succeeds.
 
 - [ ] **Step 8: Commit**
 
@@ -1266,8 +1349,8 @@ with:
 
 - [ ] **Step 8: Verify web tests + build**
 
-Run: `pnpm nx test web` then `pnpm nx build web`
-Expected: PASS / build succeeds.
+Run: `pnpm nx test web` then `pnpm nx typecheck web` then `pnpm nx build web`
+Expected: PASS / typecheck + build succeed.
 
 - [ ] **Step 9: Commit**
 
@@ -1571,10 +1654,10 @@ describe("activity routes", () => {
 Run: `pnpm nx test server -- -t "activity routes"`
 Expected: PASS (4 cases).
 
-- [ ] **Step 11: Verify contracts + server build**
+- [ ] **Step 11: Verify contracts + server typecheck**
 
-Run: `pnpm nx test contracts` then `pnpm nx build server`
-Expected: PASS / build succeeds.
+Run: `pnpm nx test contracts` then `pnpm nx typecheck contracts` then `pnpm nx typecheck server`
+Expected: PASS / typecheck succeeds.
 
 - [ ] **Step 12: Commit**
 
@@ -1593,6 +1676,7 @@ git commit -m "feat(activity): firm-scoped recent activity API from audit histor
 - Create: `packages/api-client/src/use-activity.ts`
 - Modify: `packages/api-client/src/index.ts`
 - Modify: `apps/web/src/routes/dashboard/DashboardPage.tsx`
+- Modify: `apps/web/src/routes/dashboard/DashboardPage.spec.tsx` — **this spec already exists** and is part of `nx test web`; the page now fires `/api/activity`, so the spec needs a handler for it (and a feed-rendering test).
 
 **Interfaces:**
 - Consumes: `activityResponseSchema`, type `ActivityItem`; `apiClient`.
@@ -1697,16 +1781,102 @@ with:
           </Card>
 ```
 
-- [ ] **Step 3: Verify web tests + build**
+- [ ] **Step 3: Update the existing Dashboard spec**
 
-Run: `pnpm nx test web` then `pnpm nx build web`
-Expected: PASS / build succeeds.
+Replace the entire contents of `apps/web/src/routes/dashboard/DashboardPage.spec.tsx` with the version below. It adds a default `/api/activity` handler returning an empty feed (so the empty-state assertion stays deterministic) and a new test that the feed renders when items are present:
 
-- [ ] **Step 4: Commit**
+```tsx
+import { describe, it, expect, beforeAll, afterEach, afterAll } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import { setupServer } from "msw/node";
+import { http, HttpResponse } from "msw";
+import { AppProviders } from "../../app/providers";
+import { DashboardPage } from "./DashboardPage";
+
+const staffUser = {
+  userId: 1,
+  username: "jlee",
+  fullName: "Jordan Lee",
+  companyName: "Northwind Books",
+  firmClientId: 69,
+  roles: { isStaff: true, isCustomer: false, isEmployee: false, isAdmin: false },
+};
+const clients = [
+  { id: "2243", name: "Acme Roasters" },
+  { id: "2189", name: "Globex Logistics" },
+];
+
+const server = setupServer(
+  http.get("*/api/auth/me", () => HttpResponse.json(staffUser)),
+  http.get("*/api/clients", () => HttpResponse.json(clients)),
+  http.get("*/api/activity", () => HttpResponse.json({ items: [] })),
+);
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+
+function renderPage() {
+  return render(
+    <AppProviders>
+      <DashboardPage />
+    </AppProviders>,
+  );
+}
+
+describe("DashboardPage", () => {
+  it("greets the real logged-in user", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/Jordan/)).toBeTruthy());
+    expect(screen.queryByText(/Good morning, Scott/)).toBeNull();
+  });
+
+  it("lists the real clients from the API", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Acme Roasters")).toBeTruthy());
+    expect(screen.getByText("Globex Logistics")).toBeTruthy();
+  });
+
+  it("shows honest empty states for deadlines and an empty activity feed", () => {
+    renderPage();
+    expect(screen.getByText("No upcoming deadlines")).toBeTruthy();
+    expect(screen.getByText("No recent activity")).toBeTruthy();
+  });
+
+  it("renders the activity feed when there are items", async () => {
+    server.use(
+      http.get("*/api/activity", () =>
+        HttpResponse.json({
+          items: [
+            { id: 7, when: "2025-05-01T12:00:00.000Z", actor: "Jane", action: "Recategorized", detail: "Office Depot: Uncategorized → Office Supplies" },
+          ],
+        }),
+      ),
+    );
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Recategorized")).toBeTruthy());
+    expect(screen.getByText("Office Depot: Uncategorized → Office Supplies")).toBeTruthy();
+    expect(screen.queryByText("No recent activity")).toBeNull();
+  });
+
+  it("does not render the fabricated KPI tiles", () => {
+    renderPage();
+    expect(screen.queryByText("New bank items")).toBeNull();
+    expect(screen.queryByText("Books up to date")).toBeNull();
+  });
+});
+```
+
+- [ ] **Step 4: Verify web tests + typecheck/build**
+
+Run: `pnpm nx test web` then `pnpm nx typecheck web` then `pnpm nx build web`
+Expected: PASS (including the updated Dashboard spec) / typecheck + build succeed.
+
+- [ ] **Step 5: Commit**
 
 ```bash
 git add packages/api-client/src/use-activity.ts packages/api-client/src/index.ts \
-  apps/web/src/routes/dashboard/DashboardPage.tsx
+  apps/web/src/routes/dashboard/DashboardPage.tsx \
+  apps/web/src/routes/dashboard/DashboardPage.spec.tsx
 git commit -m "feat(web): live activity feed on the dashboard"
 ```
 
@@ -2080,10 +2250,10 @@ describe("balance sheet routes", () => {
 Run: `pnpm nx test server -- -t "balance sheet routes"`
 Expected: PASS (4 cases).
 
-- [ ] **Step 11: Verify contracts + server build**
+- [ ] **Step 11: Verify contracts + server typecheck**
 
-Run: `pnpm nx test contracts` then `pnpm nx build server`
-Expected: PASS / build succeeds.
+Run: `pnpm nx test contracts` then `pnpm nx typecheck contracts` then `pnpm nx typecheck server`
+Expected: PASS / typecheck succeeds.
 
 - [ ] **Step 12: Commit**
 
@@ -2157,7 +2327,10 @@ export function BalanceSheetPage() {
 
   return (
     <div>
-      <PageHeader title="Balance Sheet" />
+      {/* Default heading is the honest "Account balances by type". Only relabel to
+          "Balance Sheet" if the Task 7 spike confirmed GL-style asset/liability/equity
+          balances — do not present a non-reconciled listing as a statement. */}
+      <PageHeader title="Account balances" sub="Grouped by account type" />
 
       {bsQuery.isLoading && <div className="text-text-soft">Loading…</div>}
       {bsQuery.isError && (
@@ -2231,8 +2404,8 @@ with:
 
 - [ ] **Step 4: Verify web tests + build**
 
-Run: `pnpm nx test web` then `pnpm nx build web`
-Expected: PASS / build succeeds.
+Run: `pnpm nx test web` then `pnpm nx typecheck web` then `pnpm nx build web`
+Expected: PASS / typecheck + build succeed.
 
 - [ ] **Step 5: Commit**
 
@@ -2253,10 +2426,10 @@ git commit -m "feat(web): Balance Sheet page (account balances by type)"
 Run: `pnpm nx run-many -t test`
 Expected: all projects PASS.
 
-- [ ] **Step 2: Build everything**
+- [ ] **Step 2: Typecheck and build everything**
 
-Run: `pnpm nx run-many -t build`
-Expected: all projects build successfully (confirms RPC types line up end-to-end).
+Run: `pnpm nx run-many -t typecheck` then `pnpm nx run-many -t build`
+Expected: typecheck PASSES for every project (this — not `build` — is what confirms the Hono RPC types line up end-to-end across server → api-client → web), then `web`/`api` build successfully.
 
 - [ ] **Step 3: Manual smoke (dev server)**
 
@@ -2281,3 +2454,15 @@ git commit -m "chore: verification fixes for data-hydration breadth pass"
 - **Firm-scoping:** every per-client route (transactions, accounts, balance-sheet) reuses `incomeStatementRepository.clientInFirm` and 404s cross-firm; activity is firm-wide by `firmClientId` with no client param. ✓
 - **Type consistency:** repository row types (`RawTxnRow`, `AccountRow`, `ActivityRow`, `BalanceRow`) are re-exported from `@accounting-completed/db` and consumed by name in server services/routes and their specs; contract types feed the hooks and pages. ✓
 - **No placeholders:** every code/test step contains complete code and an exact run command with expected result. The only deliberately exploratory step (Task 7 spike) ships concrete probe code and a delete step so it never lands in the repo. ✓
+
+### Post-review corrections (independent review, 2026-06-24)
+
+An independent reviewer verified the plan against the codebase. Fixes applied:
+- **Build target:** the library projects (`server`/`db`/`contracts`/`api-client`) have **no `nx build` target** — only `typecheck`. All library "verify" steps now run `pnpm nx typecheck <project>`; `nx build` is used only for `web`. ✓
+- **Type-safety gate:** `web`/`api` builds do not run `tsc`, so a `pnpm nx typecheck` step (and `nx run-many -t typecheck` in Task 10) is the real gate that confirms Hono RPC types line up end-to-end. Added throughout. ✓
+- **Existing specs:** `TransactionsPage.spec.tsx` and `DashboardPage.spec.tsx` already exist and run under `nx test web`. Tasks 2 and 6 now include explicit steps to rewrite/update them (MSW handlers for the new endpoints, updated assertions, removal of the deleted detail-panel test). ✓
+- **Balance Sheet labeling:** the page defaults to the honest "Account balances" heading; relabel to "Balance Sheet" only if the Task 7 spike confirms GL-style balances. ✓
+
+### Known limitations (accepted for this demo pass)
+- `transactionsRepository.availableYears` and `listForYear` fetch all of a client's `Posted_Date`s / rows for a year with no row cap (and `listForYear` intentionally includes inactive/archived rows so the Excluded tab works). Acceptable per the spec's stated client-side-volume risk; revisit with a `distinct`/min-max year query and server-side paging if a real client's ledger proves large.
+- `formatActivity` uses a heuristic over `AccountTransactionUpdateHistory`; confirm the real `TransactionUpdateType` distribution during the Task 7 spike and refine labels if needed.
