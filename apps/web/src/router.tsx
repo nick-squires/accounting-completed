@@ -1,7 +1,8 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import { AppLayout } from "./layout/AppLayout";
 import { RequireAuth } from "./app/RequireAuth";
 import { StubPage } from "./routes/_stub/StubPage";
+import { LandingPage } from "./routes/landing/LandingPage";
 import { LoginPage } from "./routes/login/LoginPage";
 import { DashboardPage } from "./routes/dashboard/DashboardPage";
 import { TransactionsPage } from "./routes/transactions/TransactionsPage";
@@ -11,7 +12,7 @@ import { ChartOfAccountsPage } from "./routes/chart-of-accounts/ChartOfAccountsP
 import { BalanceSheetPage } from "./routes/balance-sheet/BalanceSheetPage";
 
 export const router = createBrowserRouter([
-  { path: "/", element: <Navigate to="/login" replace /> },
+  { path: "/", element: <LandingPage /> },
   { path: "/login", element: <LoginPage /> },
   {
     element: <RequireAuth />,
