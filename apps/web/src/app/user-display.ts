@@ -5,10 +5,21 @@ export function displayName(me: SessionUser | null | undefined): string {
   return me?.fullName?.trim() || me?.username || "";
 }
 
-/** First name (or whole name) for greetings. */
+/**
+ * First name (or whole name) for greetings.
+ *
+ * Prefers the dedicated First_Name column. Falls back to deriving it from the
+ * display name, handling both "First Last" and the "Last, First" form some
+ * records use (e.g. "Squires, Nick" → "Nick", not "Squires,").
+ */
 export function firstName(me: SessionUser | null | undefined): string {
+  const given = me?.firstName?.trim();
+  if (given) return given.split(/\s+/)[0] ?? "";
+
   const name = displayName(me);
-  return name.split(/\s+/)[0] ?? "";
+  const commaIdx = name.indexOf(",");
+  const givenPart = commaIdx >= 0 ? name.slice(commaIdx + 1) : name;
+  return givenPart.trim().split(/\s+/)[0] ?? "";
 }
 
 /** Up-to-two-letter initials from a name; "?" when empty. */

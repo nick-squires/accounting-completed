@@ -4,7 +4,7 @@ import { requestContext } from "../middleware/request-context";
 import { createAuthRoutes } from "./routes";
 import { hashLegacyPassword } from "./password";
 
-const fakeUser = { UserId: 2189, UserName: "demo", Password: hashLegacyPassword("pw"), Client_Id: 69, RoleId: 1, Is_Staff: true, Is_Customer: false, Is_Employee: false, Is_Admin: false, Full_Name: "Demo", Company_Name: "Demo Co" };
+const fakeUser = { UserId: 2189, UserName: "demo", Password: hashLegacyPassword("pw"), Client_Id: 69, RoleId: 1, Is_Staff: true, Is_Customer: false, Is_Employee: false, Is_Admin: false, First_Name: "Demo", Full_Name: "Demo", Company_Name: "Demo Co" };
 const deps = { findByUsername: async (u: string) => (u === "demo" ? fakeUser : null) };
 const app = new Hono().use("*", requestContext).route("/api/auth", createAuthRoutes(deps));
 
@@ -19,6 +19,7 @@ describe("auth routes", () => {
     const { token, user } = await login.json();
     expect(typeof token).toBe("string");
     expect(user.username).toBe("demo");
+    expect(user.firstName).toBe("Demo");
     expect(user.fullName).toBe("Demo");
     expect(user.companyName).toBe("Demo Co");
     const me = await app.request("/api/auth/me", { headers: { authorization: `Bearer ${token}` } });

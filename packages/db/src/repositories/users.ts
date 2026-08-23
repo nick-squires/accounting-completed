@@ -10,6 +10,7 @@ export interface UserRow {
   Is_Customer: boolean | null;
   Is_Employee: boolean | null;
   Is_Admin: boolean | null;
+  First_Name: string | null;
   Full_Name: string | null;
   Company_Name: string | null;
 }
@@ -28,6 +29,7 @@ export const usersRepository = {
         Is_Customer: true,
         Is_Employee: true,
         Is_Admin: true,
+        First_Name: true,
         Full_Name: true,
         Company_Name: true,
       },

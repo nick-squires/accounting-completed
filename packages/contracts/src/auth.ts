@@ -5,6 +5,7 @@ export type LoginRequest = z.infer<typeof loginRequestSchema>;
 export const sessionUserSchema = z.object({
   userId: z.number().int(),
   username: z.string(),
+  firstName: z.string().nullable().optional(),
   fullName: z.string().nullable().optional(),
   companyName: z.string().nullable().optional(),
   firmClientId: z.number().int().nullable(),
